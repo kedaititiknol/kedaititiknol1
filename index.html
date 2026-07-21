@@ -1531,6 +1531,7 @@
       
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [syncStatus, setSyncStatus] = useState("idle");
+      
       const loadServerData = async () => {
     if (!navigator.onLine) {
         setIsLoadingData(false);
@@ -1605,7 +1606,19 @@
 
         });
 
-        const result = await response.json();
+      const syncProducts = async (data) => {
+    return await saveServerData("products", data);
+};
+
+const syncTransactions = async (data) => {
+    return await saveServerData("transactions", data);
+};
+
+const syncExpenses = async (data) => {
+    return await saveServerData("expenses", data);
+};
+        
+      const result = await response.json();
 
         if (result.status === "success") {
             setSyncStatus("saved");
