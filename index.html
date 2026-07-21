@@ -1553,7 +1553,7 @@
     console.log("Data dari Apps Script:", result);
 
     setProducts(result.products || []);
-    console.log("Jumlah produk dari server:", result.products.length);
+    console.log("Jumlah produk dari server:", result.products?.length ?? 0);
 
     setTransactions(result.transactions || []);
     setExpenses(result.expenses || []);
@@ -1778,15 +1778,28 @@ const splashTimer = setTimeout(() => {
           })
           .then(data => {
             setIsSyncing(false);
-            if (data && data.status === "success") {
-              if (data.products && data.products.length > 0) setProducts(data.products);
-              if (data.expenses && data.expenses.length > 0) setExpenses(data.expenses);
-              if (data.transactions && data.transactions.length > 0) setTransactions(data.transactions);
-              setSyncMessage({ type: 'success', text: 'Database ditarik otomatis!' });
+            if (data?.status === "success") {
+
+    setProducts(Array.isArray(data.products) ? data.products : []);
+
+    setExpenses(Array.isArray(data.expenses) ? data.expenses : []);
+
+    setTransactions(Array.isArray(data.transactions) ? data.transactions : []);
+
+    setSyncMessage({
+        type: 'success',
+        text: 'Database ditarik otomatis!'
+    });
+
             } else {
-              setSyncMessage({ type: 'success', text: 'Koneksi aktif! Sinkronisasi siap.' });
-            }
-            setTimeout(() => setSyncMessage(null), 3000);
+              setSyncMessage({
+        type: 'success',
+        text: 'Koneksi aktif! Sinkronisasi siap.'
+    });
+
+}
+
+setTimeout(() => setSyncMessage(null), 3000);
           })
           .catch(err => {
             setIsSyncing(false);
