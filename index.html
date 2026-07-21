@@ -1825,6 +1825,8 @@ const splashTimer = setTimeout(() => {
         } catch (e) {
           console.error(e);
         }
+        
+        loadServerData();
       };
 
       const handleSaveExpense = async (expenseData, isEditing) => {
