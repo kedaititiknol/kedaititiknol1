@@ -1567,6 +1567,7 @@
       // PWA Hooks
       const [pwaPrompt, setPwaPrompt] = useState(null);
       const [pwaInstalled, setPwaInstalled] = useState(false);
+      const [showSplash, setShowSplash] = useState(true);
 
       useEffect(() => {
         localStorage.setItem('titiknol_categories', JSON.stringify(categories));
