@@ -1595,6 +1595,10 @@
       useEffect(() => {
         const handleOnline = () => { setIsOnline(true); setSyncMessage(null); };
         const handleOffline = () => setIsOnline(false);
+        // Splash screen selama 2,5 detik
+const splashTimer = setTimeout(() => {
+    setShowSplash(false);
+}, 2500);
 
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
