@@ -1886,6 +1886,23 @@ const splashTimer = setTimeout(() => {
       }
 
       return (
+     <>
+    {showSplash && (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#F8F2EA]">
+        <img
+          src="./images/logo-kedai.png"
+          alt="Kedai Titik Nol"
+          className="w-32 h-32 mb-6 animate-pulse"
+        />
+        <h1 className="text-4xl font-bold text-[#4A2C1A]">
+          Kedai Titik Nol
+        </h1>
+        <p className="mt-2 text-[#8B5E3C]">
+          Sistem Manajemen Kasir
+        </p>
+      </div>
+    )}
+
         <div className="min-h-screen bg-krem-50 flex print:bg-white overflow-hidden relative font-sans text-xs">
           
           {/* Desktop Sidebar Panel */}
@@ -2116,6 +2133,7 @@ const splashTimer = setTimeout(() => {
             </div>
           )}
         </div>
+     </>
       );
     }
 
