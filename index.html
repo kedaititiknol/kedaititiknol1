@@ -425,13 +425,17 @@
 
       const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
+      console.log("ProductManager products:", products.length);
+      console.log(products);
+      console.log("Filtered:", filteredProducts.length);
+      
       const handleSave = (e) => { 
         e.preventDefault(); 
         onSaveProduct(formData, !!editingId); 
         setIsModalOpen(false); 
         resetForm(); 
       };
-
+      
       const handleEdit = (product) => { 
         setFormData(product); 
         setEditingId(product.id); 
