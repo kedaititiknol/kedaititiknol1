@@ -1613,7 +1613,7 @@
 
         // Registrasi Service Worker Aktif
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('./sw.js')
+          navigator.serviceWorker.register('./service-worker.js')
             .then(reg => console.log('SW terdaftar pada scope:', reg.scope))
             .catch(err => console.log('Registrasi SW diabaikan/gagal:', err));
         }
