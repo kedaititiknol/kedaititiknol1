@@ -1509,6 +1509,7 @@
 
     function App() {
       const [user, setUser] = useState(() => {
+        const [showSplash, setShowSplash] = useState(true);
         const saved = localStorage.getItem('titiknol_user');
         return saved ? JSON.parse(saved) : null;
       });
