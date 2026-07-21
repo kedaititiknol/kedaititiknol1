@@ -1544,11 +1544,15 @@
         const response = await fetch(APPS_SCRIPT_URL);
         const result = await response.json();
 
-        if (result.status === "success") {
+       if (result.status === "success") {
 
-            setProducts(result.products || []);
-            setTransactions(result.transactions || []);
-            setExpenses(result.expenses || []);
+    console.log("Data dari Apps Script:", result);
+
+    setProducts(result.products || []);
+    console.log("Jumlah produk dari server:", result.products.length);
+
+    setTransactions(result.transactions || []);
+    setExpenses(result.expenses || []);
 
             localStorage.setItem(
                 "titiknol_products",
