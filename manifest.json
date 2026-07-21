@@ -1,25 +1,14 @@
 {
   "id": "/kedaititiknol1/",
   "name": "Kedai Titik Nol POS",
-  "short_name": "Titik Nol POS",
+  "short_name": "Kasir",
   "description": "Aplikasi Kasir Kedai Titik Nol",
-  "lang": "id",
-  "dir": "ltr",
-
   "start_url": "/kedaititiknol1/",
   "scope": "/kedaititiknol1/",
-
   "display": "standalone",
-  "display_override": [
-    "window-controls-overlay",
-    "standalone"
-  ],
-
   "orientation": "portrait",
-
   "background_color": "#FAF7F2",
   "theme_color": "#96683F",
-
   "icons": [
     {
       "src": "icons/icon-72.png",
@@ -63,13 +52,5 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-
-  "categories": [
-    "business",
-    "productivity",
-    "finance"
-  ],
-
-  "prefer_related_applications": false
+  ]
 }
