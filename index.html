@@ -1292,11 +1292,8 @@
 
         try {
           await fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(newTransaction) });
-          
-          setProducts(products.map(p => {
-            const cartItem = cart.find(c => c.id === p.id);
-            return cartItem ? { ...p, stock: p.stock - cartItem.qty } : p;
-          }));
+          await new Promise(resolve => setTimeout(resolve, 1000));
+await loadServerData();
 
           addTransaction(newTransaction);
           setLastInvoice(newTransaction);
@@ -1822,32 +1819,50 @@ setTimeout(() => setSyncMessage(null), 3000);
         if (isEditing) setProducts(prev => prev.map(p => p.id === productData.id ? updatedProduct : p));
         else setProducts(prev => [...prev, updatedProduct]);
 
-        try {
-          await fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'saveProduct', data: updatedProduct })
-          });
-        } catch (e) {
-          console.error(e);
-        }
+       try {
+  await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({
+      action: 'saveProduct',
+      data: updatedProduct
+    })
+  });
+
+  // tunggu Apps Script selesai menulis
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // refresh dari server
+  await loadServerData();
+
+} catch (e) {
+  console.error(e);
+}
       };
 
       const handleDeleteProduct = async (productId) => {
         setProducts(prev => prev.filter(p => p.id !== productId));
-        try {
-          await fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'deleteProduct', data: { id: productId } })
-          });
-        } catch (e) {
-          console.error(e);
-        }
-        
-        loadServerData();
+       try {
+  await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({
+      action: 'deleteProduct',
+      data: { id: productId }
+    })
+  });
+
+  // beri waktu Apps Script menyimpan perubahan
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // tarik ulang data dari server
+  await loadServerData();
+
+} catch (e) {
+  console.error(e);
+}
       };
 
       const handleSaveExpense = async (expenseData, isEditing) => {
@@ -1862,31 +1877,52 @@ setTimeout(() => setSyncMessage(null), 3000);
         if (isEditing) setExpenses(prev => prev.map(e => e.id === expenseData.id ? updatedExpense : e));
         else setExpenses(prev => [updatedExpense, ...prev]);
 
-        try {
-          await fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'saveExpense', data: updatedExpense })
-          });
-        } catch (e) {
-          console.error(e);
-        }
+       try {
+  await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({
+      action: 'saveExpense',
+      data: updatedExpense
+    })
+  });
+
+  // tunggu Apps Script selesai
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // ambil data terbaru dari server
+  await loadServerData();
+
+} catch (e) {
+  console.error(e);
+}
       };
 
       const handleDeleteExpense = async (expenseId) => {
-        setExpenses(prev => prev.filter(e => e.id !== expenseId));
-        try {
-          await fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'deleteExpense', data: { id: expenseId } })
-          });
-        } catch (e) {
-          console.error(e);
-        }
-      };
+  setExpenses(prev => prev.filter(e => e.id !== expenseId));
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'deleteExpense',
+        data: { id: expenseId }
+      })
+    });
+
+    // tunggu Apps Script selesai menghapus
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // ambil data terbaru dari server
+    await loadServerData();
+
+  } catch (e) {
+    console.error(e);
+  }
+};
 
       const handleLogin = (e) => {
         e.preventDefault();
