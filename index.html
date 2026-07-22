@@ -232,10 +232,10 @@
               );
             })}
 
-            {data.map((item, idx) => {
-              const barWidth = chartWidth / data.length - 24;
+           {(data || []).map((item, idx) => {
+    const barWidth = chartWidth / ((data?.length || 1)) - 24;
               const barHeight = (item.amount / maxVal) * chartHeight;
-              const x = padding + idx * (chartWidth / data.length) + 12;
+             const x = padding + idx * (chartWidth / (data?.length || 1)) + 12;
               const y = padding + chartHeight - barHeight;
               
               const colors = {
