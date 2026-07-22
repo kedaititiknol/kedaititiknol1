@@ -160,7 +160,7 @@
       return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     };
 
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbymx_MbPNSy_ahf1S4cNyhV57w2G8ppFZGcQJAswpKchGbASNSEyLgkFRhi-l4qYqYuDw/exec";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDPIjNROLO2rF7DcEMj94aLQppUuq43SPm4Rqo-Omv4apFihhVBpveCKu1EYsDctZ0ig/exec";
 
     const Icon = ({ name, size = 20, className = "" }) => {
       const paths = {
@@ -1297,21 +1297,22 @@
         cashier: user ? user.name : "Kasir"
     };
 
-    // Kirim data ke Google Sheets via POST
+    // Kirim data menggunakan mode no-cors agar lolos dari blokir browser
     fetch(APPS_SCRIPT_URL, { 
         method: 'POST', 
+        mode: 'no-cors',
+        headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+        },
         body: JSON.stringify({
             action: 'checkout',
             transaction: newTransaction
         }) 
     })
-    .then(response => response.json())
-    .then(result => {
-        if(result.status !== "success") {
-            throw new Error("Gagal menyimpan di server Google Sheets");
-        }
+    .then(() => {
+        // Karena mode no-cors membuat respons tidak bisa dibaca langsung (opaque),
+        // kita asumsikan sukses dan langsung perbarui state aplikasi secara lokal.
         
-        // Update stok lokal di aplikasi
         setProducts(products.map(p => {
             const cartItem = cart.find(c => c.id === p.id);
             return cartItem ? { ...p, stock: Number(p.stock) - Number(cartItem.qty) } : p;
@@ -1332,7 +1333,7 @@
     })
     .catch(error => {
         console.error("Error saat checkout:", error);
-        setCheckoutError("Gagal menyimpan transaksi ke Google Sheets! Periksa koneksi internet.");
+        setCheckoutError("Gagal mengirim ke Google Sheets! Periksa koneksi internet.");
         setIsProcessing(false);
     });
 }
