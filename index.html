@@ -310,7 +310,8 @@
       const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
       
       let totalHPP = 0;
-      transactions.forEach(trx => trx.items.forEach(item => {
+     (transactions || []).forEach(trx => {
+    (trx.items || []).forEach(item => {
         const product = products.find(p => p.id === item.productId);
         if (product) totalHPP += product.costPrice * item.qty;
       }));
