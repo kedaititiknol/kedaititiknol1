@@ -1280,7 +1280,6 @@
 
     setIsProcessing(true);
 
-    // 1. Siapkan data transaksi baru
     const newTransaction = {
         id: `TRX-${Date.now().toString().slice(-6)}`, 
         date: new Date().toISOString(),
@@ -1298,7 +1297,6 @@
         cashier: user ? user.name : "Kasir"
     };
 
-    // 2. Kirim data ke Google Sheets via POST menggunakan .then() (Tanpa await)
     fetch(APPS_SCRIPT_URL, { 
         method: 'POST', 
         body: JSON.stringify({
@@ -1312,7 +1310,6 @@
             throw new Error("Gagal menyimpan di server Google Sheets");
         }
         
-        // 3. Update State Lokal (Stok berkurang & Tambah riwayat transaksi di aplikasi)
         setProducts(products.map(p => {
             const cartItem = cart.find(c => c.id === p.id);
             return cartItem ? { ...p, stock: Number(p.stock) - Number(cartItem.qty) } : p;
@@ -1322,7 +1319,6 @@
             addTransaction(newTransaction);
         }
         
-        // 4. Bersihkan form & keranjang, lalu cetak struk
         setLastInvoice(newTransaction);
         setCart([]); 
         setIsCheckingOut(false); 
@@ -1338,35 +1334,6 @@
         setIsProcessing(false);
     });
 }
-        const newTransaction = {
-          id: `TRX-${Date.now().toString().slice(-6)}`, 
-          date: new Date().toISOString(),
-          items: cart.map(c => ({ productId: c.id, name: c.name, qty: c.qty, price: c.sellPrice, subtotal: c.sellPrice * c.qty })),
-          total: cartTotal, 
-          payment: paymentMethod === 'Tunai' ? paid : cartTotal,
-          change: paymentMethod === 'Tunai' ? paid - cartTotal : 0,
-          paymentMethod: paymentMethod, 
-          cashier: user.name
-        };
-
-        try {
-          await fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(newTransaction) });
-          
-          setProducts(products.map(p => {
-            const cartItem = cart.find(c => c.id === p.id);
-            return cartItem ? { ...p, stock: p.stock - cartItem.qty } : p;
-          }));
-
-          addTransaction(newTransaction);
-          setLastInvoice(newTransaction);
-          setCart([]); setIsCheckingOut(false); setPaymentAmount(''); setPaymentMethod('Tunai'); setIsProcessing(false);
-          
-          setTimeout(() => window.print(), 400);
-        } catch (error) {
-          setCheckoutError("Gagal mengirim data! Pastikan online.");
-          setIsProcessing(false);
-        }
-      };
 
       if (lastInvoice) {
         return (
