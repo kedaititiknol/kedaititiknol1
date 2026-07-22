@@ -110,12 +110,277 @@
       background: #D3C2A8; /* krem-300 */
     }
   </style>
-</head>
-<body class="bg-krem-50 min-h-screen text-coksu-900 overflow-x-hidden">
+  </head>
+  <body class="bg-krem-50 min-h-screen text-coksu-900 overflow-x-hidden">
+  
+    <div id="root"></div>
+    <!-- ==================== UI / TAMPILAN HTML ==================== -->
+    
+    <!-- 1. Form Produk (Admin) -->
+    <form id="formProduk">
+      <input type="text" id="prodId" placeholder="ID Produk" required>
+      <input type="text" id="prodNama" placeholder="Nama Produk" required>
+      <input type="text" id="prodKategori" placeholder="Kategori">
+      <input type="number" id="prodHargaBeli" placeholder="Harga Beli">
+      <input type="number" id="prodHargaJual" placeholder="Harga Jual">
+      <input type="number" id="prodStok" placeholder="Stok">
+      <input type="text" id="prodBarcode" placeholder="Barcode">
+      <button type="submit">Simpan Produk</button>
+    </form>
+  
+    <!-- 2. Section Kasir (POS) -->
+    <div id="sectionKasir">
+      <select id="metodeBayar">
+        <option value="Tunai">Tunai</option>
+        <option value="QRIS">QRIS</option>
+      </select>
+      <button id="btnProsesBayar" onclick="prosesPembayaran()">Proses Bayar</button>
+    </div>
+  
+  
+    <!-- ==================== JAVASCRIPT ==================== -->
+    <script>
 
-  <div id="root"></div>
+      // Variable Global Penyimpanan Data
+let daftarProduk = [];
 
-  <script type="text/babel">
+// Fungsi Memuat Data Produk dari Google Sheets ke UI
+async function renderKatalogProduk() {
+  const container = document.getElementById("katalogProduk"); // ID elemen penampung produk/tabel
+  if (!container) return;
+
+  // Tampilkan Indikator Loading
+  container.innerHTML = `<p class="text-center py-4 text-gray-500">⏳ Memuat data produk dari Sheets...</p>`;
+
+  // Panggil API getProduk() yang sudah dibuat sebelumnya
+  daftarProduk = await getProduk();
+
+  if (!daftarProduk || daftarProduk.length === 0) {
+    container.innerHTML = `<p class="text-center py-4 text-red-500">Belum ada data produk atau gagal terhubung.</p>`;
+    return;
+  }
+
+  // Render Data ke Tabel / Kartu Produk
+  let htmlContent = "";
+  daftarProduk.forEach((item) => {
+    htmlContent += `
+      <tr class="border-b hover:bg-gray-50">
+        <td class="p-2 font-mono text-sm">${item.id_produk}</td>
+        <td class="p-2 font-semibold">${item.nama_produk}</td>
+        <td class="p-2 text-sm text-gray-600">${item.kategori || "-"}</td>
+        <td class="p-2 text-right">Rp ${Number(item.harga_jual).toLocaleString('id-ID')}</td>
+        <td class="p-2 text-center">
+          <span class="px-2 py-1 text-xs rounded ${item.stok > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+            ${item.stok}
+          </span>
+        </td>
+        <td class="p-2 text-center">
+          <button onclick="tambahKeKeranjang('${item.id_produk}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+            + Tambah
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  container.innerHTML = htmlContent;
+}
+
+      // Tambah Produk ke Keranjang Kasir
+function tambahKeKeranjang(idProduk) {
+  const produk = daftarProduk.find(p => p.id_produk === idProduk);
+  if (!produk) return;
+
+  if (produk.stok <= 0) {
+    alert("Stok produk ini habis!");
+    return;
+  }
+
+  // Cek apakah barang sudah ada di keranjang
+  const itemExist = keranjangBelanja.find(item => item.id_produk === idProduk);
+
+  if (itemExist) {
+    if (itemExist.qty + 1 > produk.stok) {
+      alert("Jumlah melebihi stok yang tersedia!");
+      return;
+    }
+    itemExist.qty += 1;
+    itemExist.subtotal = itemExist.qty * itemExist.harga_satuan;
+  } else {
+    keranjangBelanja.push({
+      id_produk: produk.id_produk,
+      nama_produk: produk.nama_produk,
+      qty: 1,
+      harga_satuan: Number(produk.harga_jual),
+      subtotal: Number(produk.harga_jual)
+    });
+  }
+
+  renderKeranjangUI();
+}
+
+// Render Tampilan Keranjang & Kalkulasi Total
+function renderKeranjangUI() {
+  const container = document.getElementById("listKeranjang");
+  const totalElem = document.getElementById("textTotalBelanja");
+  
+  if (!container) return;
+
+  if (keranjangBelanja.length === 0) {
+    container.innerHTML = `<p class="text-gray-400 text-center py-4">Keranjang masih kosong</p>`;
+    if (totalElem) totalElem.innerText = "Rp 0";
+    totalBelanja = 0;
+    return;
+  }
+
+  let html = "";
+  totalBelanja = 0;
+
+  keranjangBelanja.forEach((item, index) => {
+    totalBelanja += item.subtotal;
+    html += `
+      <div class="flex justify-between items-center border-b py-2">
+        <div>
+          <p class="font-medium text-sm">${item.nama_produk}</p>
+          <p class="text-xs text-gray-500">${item.qty} x Rp ${item.harga_satuan.toLocaleString('id-ID')}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-sm">Rp ${item.subtotal.toLocaleString('id-ID')}</span>
+          <button onclick="hapusItemKeranjang(${index})" class="text-red-500 text-xs hover:underline">Hapus</button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+  if (totalElem) totalElem.innerText = `Rp ${totalBelanja.toLocaleString('id-ID')}`;
+  nominalDibayar = totalBelanja; // Default bayar pas
+}
+
+// Hapus Item dari Keranjang
+function hapusItemKeranjang(index) {
+  keranjangBelanja.splice(index, 1);
+  renderKeranjangUI();
+}
+
+      function bukaTab(namaTab) {
+  // Sembunyikan semua section
+  const sections = document.querySelectorAll('.tab-content');
+  sections.forEach(sec => sec.classList.add('hidden'));
+
+  // Tampilkan tab yang dipilih
+  const targetTab = document.getElementById(namaTab);
+  if (targetTab) {
+    targetTab.classList.remove('hidden');
+  }
+
+  // Auto-refresh data saat tab dibuka
+  if (namaTab === 'tabKasir' || namaTab === 'tabProduk') {
+    renderKatalogProduk();
+  }
+}
+
+// Jalankan otomatis saat halaman pertama kali dibuka
+document.addEventListener("DOMContentLoaded", () => {
+  renderKatalogProduk(); // Load data awal
+});
+      
+      // 1. VARIABLE API URL
+      const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzgXYVGw3inp1gcKkIJIQkprv7FqtC2dZxnaVHuJOcQ3Huh5Us5jNRcNigzMi9goMOgzA/exec";
+  
+      // Variable global keranjang kasir
+      let keranjangBelanja = [];
+      let totalBelanja = 0;
+      let nilaiDiskon = 0;
+      let nominalDibayar = 0;
+  
+      // 2. FUNGSI-FUNGSI API FETCH (getProduk, simpanProduk, kirimTransaksi)
+      async function getProduk() { ... }
+  
+      async function simpanProduk(produkData) {
+        const payload = {
+          action: "saveProduk",
+          produk: produkData
+        };
+        try {
+          const response = await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
+          const result = await response.json();
+          alert(result.message);
+        } catch (error) {
+          console.error("Gagal menyimpan produk:", error);
+        }
+      }
+  
+      async function kirimTransaksi(dataTransaksi, listKeranjang) {
+        const payload = {
+          action: "tambahTransaksi",
+          transaksi: dataTransaksi,
+          items: listKeranjang
+        };
+        try {
+          const response = await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
+          const result = await response.json();
+          if (result.status === "success") {
+            alert("Transaksi berhasil disimpan!");
+          }
+        } catch (error) {
+          console.error("Error submit transaksi:", error);
+        }
+      }
+  
+  
+      // 3. EVENT LISTENER & HANDLER UI (DI SINI PENEMPATANNYA)
+  
+      // A. Event Listener Form Produk
+      document.getElementById("formProduk").addEventListener("submit", async function(e) {
+        e.preventDefault(); // Mencegah reload halaman
+        
+        const produkData = {
+          id_produk: document.getElementById("prodId").value,
+          nama_produk: document.getElementById("prodNama").value,
+          kategori: document.getElementById("prodKategori").value,
+          harga_beli: Number(document.getElementById("prodHargaBeli").value),
+          harga_jual: Number(document.getElementById("prodHargaJual").value),
+          stok: Number(document.getElementById("prodStok").value),
+          barcode: document.getElementById("prodBarcode").value
+        };
+  
+        await simpanProduk(produkData);
+        this.reset(); // Bersihkan form setelah simpan
+      });
+  
+      // B. Handler Tombol Bayar Kasir
+      async function prosesPembayaran() {
+        if (keranjangBelanja.length === 0) {
+          alert("Keranjang masih kosong!");
+          return;
+        }
+  
+        const dataTransaksi = {
+          id_transaksi: "TRX-" + Date.now(),
+          tanggal: new Date().toISOString().split('T')[0],
+          waktu: new Date().toLocaleTimeString('id-ID', { hour12: false }),
+          kasir: "Admin",
+          metode_pembayaran: document.getElementById("metodeBayar").value,
+          total_belanja: totalBelanja,
+          diskon: nilaiDiskon,
+          total_bayar: nominalDibayar
+        };
+  
+        await kirimTransaksi(dataTransaksi, keranjangBelanja);
+        
+        // Reset keranjang
+        keranjangBelanja = [];
+      }
+    <script type="text/babel">
     const { useState, useEffect, useMemo, useRef } = React;
 
     const initialCategories = [
@@ -160,8 +425,98 @@
       return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     };
 
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzgXYVGw3inp1gcKkIJIQkprv7FqtC2dZxnaVHuJOcQ3Huh5Us5jNRcNigzMi9goMOgzA/exec";
+    // 1. Inisialisasi URL Apps Script
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzgXYVGw3inp1gcKkIJIQkprv7FqtC2dZxnaVHuJOcQ3Huh5Us5jNRcNigzMi9goMOgzA/exec";
 
+// ----------------------------------------------------
+// 1. MENGAMBIL DATA PRODUK (READ)
+// ----------------------------------------------------
+async function getProduk() {
+  try {
+    const response = await fetch(`${APPS_SCRIPT_URL}?action=getProduk`);
+    const data = await response.json();
+    console.log("Data Produk Loaded:", data);
+    return data;
+  } catch (error) {
+    console.error("Gagal mengambil data produk:", error);
+  }
+}
+
+// ----------------------------------------------------
+// 2. MENGIRIM TRANSAKSI BARU (WRITE + POTONG STOK)
+// ----------------------------------------------------
+async function kirimTransaksi(dataTransaksi, listKeranjang) {
+  // Payload khusus untuk TRANSAKSI (pembayaran & pemotongan stok)
+  const payload = {
+    action: "tambahTransaksi",
+    transaksi: {
+      id_transaksi: dataTransaksi.id_transaksi, // contoh: "TRX-20260308-001"
+      tanggal: dataTransaksi.tanggal,           // contoh: "2026-03-08"
+      waktu: dataTransaksi.waktu,               // contoh: "14:00"
+      kasir: dataTransaksi.kasir,               // contoh: "Admin"
+      metode_pembayaran: dataTransaksi.metode,   // contoh: "QRIS" / "Tunai"
+      total_belanja: dataTransaksi.total,
+      diskon: dataTransaksi.diskon,
+      total_bayar: dataTransaksi.bayar
+    },
+    items: listKeranjang // Array dari barang yang dibeli
+    /* Contoh isi listKeranjang:
+      [
+        { id_produk: "PRD-001", nama_produk: "Mouse", qty: 1, harga_satuan: 50000, subtotal: 50000 }
+      ]
+    */
+  };
+
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    
+    if (result.status === "success") {
+      alert("Transaksi berhasil disimpan & stok diperbarui!");
+    } else {
+      alert("Gagal menyimpan transaksi: " + result.message);
+    }
+  } catch (error) {
+    console.error("Gagal mengirim transaksi:", error);
+  }
+}
+
+// ----------------------------------------------------
+// 3. TAMBAH / EDIT PRODUK BARU
+// ----------------------------------------------------
+async function simpanProduk(produkData) {
+  // Payload khusus untuk data PRODUK
+  const payload = {
+    action: "saveProduk",
+    produk: {
+      id_produk: produkData.id_produk || "PRD-001",
+      nama_produk: produkData.nama_produk || "Mouse Wireless",
+      kategori: produkData.kategori || "Aksesoris",
+      harga_beli: produkData.harga_beli || 35000,
+      harga_jual: produkData.harga_jual || 50000,
+      stok: produkData.stok || 10,
+      barcode: produkData.barcode || "89912345678"
+    }
+  };
+
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    console.log("Status Simpan Produk:", result.message);
+    return result;
+  } catch (error) {
+    console.error("Gagal menyimpan produk:", error);
+  }
+}
+    
     const Icon = ({ name, size = 20, className = "" }) => {
       const paths = {
         dashboard: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" />,
