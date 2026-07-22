@@ -1266,8 +1266,10 @@
           }).filter(item => item.qty > 0));
       };
 
-      const handleCheckout = async (e) => {
-    e.preventDefault();
+      async function handleCheckout(e) {
+    if (e && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+    }
     setCheckoutError('');
     const paid = parseInt(paymentAmount) || 0;
     
@@ -1336,7 +1338,7 @@
         setCheckoutError("Gagal menyimpan transaksi ke Google Sheets! Periksa koneksi internet.");
         setIsProcessing(false);
     }
-};
+}
         const newTransaction = {
           id: `TRX-${Date.now().toString().slice(-6)}`, 
           date: new Date().toISOString(),
