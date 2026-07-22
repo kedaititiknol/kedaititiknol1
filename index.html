@@ -160,7 +160,7 @@
       return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     };
 
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwvyl_u7XJCIEofxqJQf7YsKXIiR-pc84eL8U_AmDapASeAFDTuec5vbW_7G8TlAddAtg/exec";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyrtc-QhUbhbkKSnQf3AxfP9U6UDsI6_tknzsFbnSAy8Lhpb1cdqvuaFRVtk5sdVuUmlQ/exec";
 
 // Fungsi 1: Menarik data dari Sheets ke Aplikasi (GET)
 const tarikDataDariSheet = async (namaSheet) => {
@@ -194,6 +194,75 @@ const kirimDataKeSheet = async (namaSheet, dataBarisArray) => {
   } catch (error) {
     console.error(`Gagal mengirim data ke ${namaSheet}:`, error);
   }
+};
+
+    // Fungsi 3: Mengubah data yang sudah ada (EDIT)
+const editDataDiSheet = async (namaSheet, idData, dataBarisArray) => {
+  try {
+    const payload = {
+      sheetName: namaSheet,
+      action: "edit",
+      id: idData, // ID ini yang akan dicari oleh Google Sheets di Kolom A
+      rowData: dataBarisArray
+    };
+    
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    console.log(`Data ID ${idData} berhasil diedit di ${namaSheet}`);
+  } catch (error) {
+    console.error(`Gagal edit data di ${namaSheet}:`, error);
+  }
+};
+
+// Fungsi 4: Menghapus data (DELETE)
+const hapusDataDiSheet = async (namaSheet, idData) => {
+  try {
+    const payload = {
+      sheetName: namaSheet,
+      action: "delete",
+      id: idData
+    };
+    
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    console.log(`Data ID ${idData} berhasil dihapus dari ${namaSheet}`);
+  } catch (error) {
+    console.error(`Gagal hapus data di ${namaSheet}:`, error);
+  }
+};
+
+const tambahUser = (userBaru) => {
+  // 1. Kode lamamu (update state)
+  const newUser = { id: Date.now(), nama: userBaru.nama, role: userBaru.role, pin: userBaru.pin };
+  setUsers([...users, newUser]);
+
+  // 2. TAMBAHKAN INI: Kirim ke tab "Users"
+  kirimDataKeSheet("Users", [
+    newUser.id,
+    newUser.nama,
+    newUser.role,
+    newUser.pin
+  ]);
+};
+
+    const simpanPengaturan = (settingBaru) => {
+  // 1. Kode lamamu (update state)
+  setSettings(settingBaru);
+
+  // 2. TAMBAHKAN INI: Edit data di tab "Settings"
+  // Asumsi: ID pengaturan selalu tetap, misalnya "SETTING_01"
+  editDataDiSheet("Settings", "SETTING_01", [
+    "SETTING_01",              // Kolom A: ID
+    settingBaru.namaToko,      // Kolom B: Nama Toko
+    settingBaru.alamat,        // Kolom C: Alamat
+    settingBaru.pajakPersen    // Kolom D: Pajak
+  ]);
 };
     
     const Icon = ({ name, size = 20, className = "" }) => {
@@ -470,6 +539,8 @@ const kirimDataKeSheet = async (namaSheet, dataBarisArray) => {
         setEditingId(product.id); 
         setIsModalOpen(true); 
       };
+
+      
 
       const handleDelete = (id) => { 
         openConfirm("Apakah Anda yakin ingin menghapus menu produk ini?", () => {
@@ -1425,6 +1496,13 @@ const prosesPembayaran = (keranjang, total) => {
   
   // 3. Reset keranjang dll...
 };
+
+      const hapusProduk = (idProduk) => {
+  // ... (kode lama kamu untuk update state UI) ...
+
+  // TAMBAHKAN INI: Hapus dari Sheets
+  hapusDataDiSheet("Products", idProduk);
+};
       
 // 2. Fungsi Hapus Produk (Sinkron 2 Arah Mendalam)
 function handleDeleteProduct(productId) {
@@ -1749,7 +1827,76 @@ function handleDeleteProduct(productId) {
       const [loginError, setLoginError] = useState('');
       const [activeTab, setActiveTab] = useState('dashboard');
       const [isOnline, setIsOnline] = useState(navigator.onLine);
+      
+      // State loading sinkronisasi (cukup 1 saja)
       const [isSyncing, setIsSyncing] = useState(false);
+
+      const [syncMessage, setSyncMessage] = useState(null);
+      const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+      const [newProfileName, setNewProfileName] = useState('');
+
+      const [confirmDialog, setConfirmDialog] = useState({
+        isOpen: false,
+        message: "",
+        onConfirm: null
+      });
+
+      // PWA Hooks
+      const [pwaPrompt, setPwaPrompt] = useState(null);
+      const [pwaInstalled, setPwaInstalled] = useState(false);
+
+      // 2. Fungsi tombol sinkronisasi yang sudah disesuaikan dengan state toko
+      const handleManualSync = async () => {
+        setIsSyncing(true);
+        
+        try {
+          const [dataUsers, dataProducts, dataTransactions, dataExpenses, dataSettings] = await Promise.all([
+            tarikDataDariSheet("Users"),
+            tarikDataDariSheet("Products"),
+            tarikDataDariSheet("Transactions"),
+            tarikDataDariSheet("Expenses"),
+            tarikDataDariSheet("Settings")
+          ]);
+
+          if (dataUsers) setUsers(dataUsers);
+          if (dataProducts) setProducts(dataProducts);
+          if (dataTransactions) setTransactions(dataTransactions);
+          if (dataExpenses) setExpenses(dataExpenses);
+
+          // Penanganan khusus untuk settings (karena dipisah per state)
+          if (dataSettings) {
+            const settingData = Array.isArray(dataSettings) ? dataSettings[0] : dataSettings;
+            if (settingData) {
+              if (settingData.namaToko) {
+                setStoreName(settingData.namaToko);
+                localStorage.setItem('titiknol_store_name', settingData.namaToko);
+              }
+              if (settingData.alamat) {
+                setStoreAddress(settingData.alamat);
+                localStorage.setItem('titiknol_store_address', settingData.alamat);
+              }
+              if (settingData.telepon) {
+                setStorePhone(settingData.telepon);
+                localStorage.setItem('titiknol_store_phone', settingData.telepon);
+              }
+            }
+          }
+
+          // Update Backup LocalStorage lainnya
+          if (dataUsers) localStorage.setItem('users', JSON.stringify(dataUsers));
+          if (dataProducts) localStorage.setItem('products', JSON.stringify(dataProducts));
+          if (dataTransactions) localStorage.setItem('transactions', JSON.stringify(dataTransactions));
+          if (dataExpenses) localStorage.setItem('expenses', JSON.stringify(dataExpenses));
+
+          alert("✅ Sinkronisasi berhasil! Data sudah versi terbaru.");
+          
+        } catch (error) {
+          console.error("Sinkronisasi gagal:", error);
+          alert("❌ Gagal menyinkronkan data. Pastikan koneksi internet lancar dan URL Apps Script benar.");
+        } finally {
+          setIsSyncing(false);
+        }
+      };
       const [syncMessage, setSyncMessage] = useState(null);
 
       const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -2118,15 +2265,12 @@ useEffect(() => {
               <p className="text-coksu-300 text-[10px] mt-0.5 font-medium">Sistem Manajemen Kasir</p>
             </div>
 
-            <button 
-    onClick={handleSyncWithGoogleSheets}
-    disabled={isLoading}
-    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium shadow transition-all duration-200"
+           <button 
+  onClick={handleManualSync} 
+  disabled={isSyncing} 
+  className="btn-sync" // Sesuaikan class CSS-mu
 >
-    <svg className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-    </svg>
-    {isLoading ? 'Menyelaraskan...' : 'Sinkronisasi Sheets'}
+  {isSyncing ? "⏳ Menyinkronkan..." : "🔄 Sinkronisasi Data"}
 </button>
             
             <div className="p-4 flex items-center justify-between border-b border-coksu-800 bg-coksu-800/30">
