@@ -497,7 +497,7 @@ const netProfit = totalOmzet - totalHPP - totalExpenses;
                   {filteredProducts.map(p => (
                     <tr key={p.id} className="border-b border-krem-100 hover:bg-krem-50/50 transition text-sm">
                       <td className="p-4 pl-6 font-extrabold text-coksu-950">{p.name}</td>
-                      <td className="p-4 text-xs font-bold text-coksu-500">{categories.find(c => c.id === Number(p.categoryId))?.name || '-'}</td>
+                      <td className="p-4 text-xs font-bold text-coksu-500">{categories.find(c => c.id === Number(p.categoryId)) || {}).name || '-'}</td>
                       <td className="p-4 text-center"><span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${p.stock <= 10 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>{p.stock}</span></td>
                       <td className="p-4 text-right font-semibold text-coksu-600">{formatRupiah(p.costPrice)}</td>
                       <td className="p-4 text-right font-bold text-coksu-900">{formatRupiah(p.sellPrice)}</td>
@@ -518,7 +518,7 @@ const netProfit = totalOmzet - totalHPP - totalExpenses;
                   <div className="flex justify-between items-start">
                     <div className="min-w-0 pr-2">
                       <h4 className="font-extrabold text-coksu-950 text-sm truncate">{p.name}</h4>
-                      <p className="text-[10px] font-bold text-coksu-400 mt-0.5">{categories.find(c => c.id === Number(p.categoryId))?.name || '-'}</p>
+                      <p className="text-[10px] font-bold text-coksu-400 mt-0.5">{categories.find(c => c.id === Number(p.categoryId)) || {}).name || '-'}</p>
                     </div>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${p.stock <= 10 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>
                       Stok: {p.stock}
@@ -1334,16 +1334,20 @@ await loadServerData();
                 <div className="flex justify-between"><span>Kasir:</span> <span className="font-extrabold text-coksu-900">{lastInvoice.cashier}</span></div>
               </div>
               <div className="mb-4 space-y-2.5">
-               (lastInvoice?.items ?? []).map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-start">
-                    <div className="min-w-0 pr-2">
-                      <p className="font-extrabold text-xs break-words">{item.name}</p>
-                      <p className="text-coksu-500 mt-0.5">{item.qty} x {formatRupiah(item.price)}</p>
-                    </div>
-                    <div className="text-right font-black text-xs shrink-0">{formatRupiah(item.subtotal)}</div>
-                  </div>
-                ))}
-              </div>
+  {((lastInvoice && lastInvoice.items) || []).map((item, idx) => (
+    <div key={idx} className="flex justify-between items-start">
+      <div className="min-w-0 pr-2">
+        <p className="font-extrabold text-xs break-words">{item.name}</p>
+        <p className="text-coksu-500 mt-0.5">
+          {item.qty} x {formatRupiah(item.price)}
+        </p>
+      </div>
+      <div className="text-right font-black text-xs shrink-0">
+        {formatRupiah(item.subtotal)}
+      </div>
+    </div>
+  ))}
+</div>
               <div className="border-t border-dashed border-krem-300 pt-3 space-y-1.5">
                 <div className="flex justify-between font-black text-sm text-coksu-900"><span>Total:</span> <span>{formatRupiah(lastInvoice.total)}</span></div>
                 {lastInvoice.paymentMethod === 'Tunai' && (
