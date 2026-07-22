@@ -404,7 +404,7 @@
                       </div>
                     </div>
                   ))}
-                  {lowStockProducts.length === 0 && (
+                  {lowStock(products || []).length === 0 && (
                     <div className="text-center py-10">
                       <Icon name="checkCircle" className="text-emerald-500 mb-2" size={28} />
                       <p className="text-xs text-coksu-500 font-bold">Semua stok aman!</p>
@@ -426,9 +426,9 @@
 
       const filteredProducts = (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      console.log("ProductManager products:", products.length);
+      console.log("ProductManager products:", (products || []).length);
       console.log(products);
-      console.log("Filtered:", filteredProducts.length);
+      console.log("Filtered:", filtered(products || []).length);
       
       const handleSave = (e) => { 
         e.preventDefault(); 
@@ -528,7 +528,7 @@
                   </div>
                 </div>
               ))}
-              {filteredProducts.length === 0 && (
+              {filtered(products || []).length === 0 && (
                 <p className="text-center py-8 text-sm text-coksu-400 font-bold">Tidak ada produk ditemukan.</p>
               )}
             </div>
