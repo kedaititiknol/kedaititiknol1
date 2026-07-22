@@ -208,7 +208,7 @@
     };
 
     const InteractiveSvgChart = ({ data }) => {
-      const maxVal = Math.max(...data.map(d => d.amount), 1);
+    const maxVal = Math.max(...(data ?? []).map(d => d.amount), 1);
       const width = 500;
       const height = 220;
       const padding = 40;
@@ -1330,7 +1330,7 @@
                 <div className="flex justify-between"><span>Kasir:</span> <span className="font-extrabold text-coksu-900">{lastInvoice.cashier}</span></div>
               </div>
               <div className="mb-4 space-y-2.5">
-                {lastInvoice.items.map((item, idx) => (
+               (lastInvoice?.items ?? []).map((item, idx) => (
                   <div key={idx} className="flex justify-between items-start">
                     <div className="min-w-0 pr-2">
                       <p className="font-extrabold text-xs break-words">{item.name}</p>
