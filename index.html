@@ -160,7 +160,7 @@
       return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     };
 
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwsfp8xqmjwMADKnsTgkCjK9xJlacTs71yc194uaBHZLAsnZP14t6p8Wobb2x-GUdsx_g/exec";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwvyl_u7XJCIEofxqJQf7YsKXIiR-pc84eL8U_AmDapASeAFDTuec5vbW_7G8TlAddAtg/exec";
 
     const Icon = ({ name, size = 20, className = "" }) => {
       const paths = {
@@ -1338,18 +1338,17 @@
     });
 }
 
-     // 1. Fungsi Tambah Produk (Sinkron 2 Arah PASTI Masuk ke Google Sheets)
+    // 1. Fungsi Tambah Produk (Sinkron 2 Arah Mendalam)
 function handleAddProduct(newProductData) {
     const productItem = {
-        id: newProductData.id || `P-${Date.now().toString().slice(-6)}`,
-        name: newProductData.name,
-        category: newProductData.category,
+        id: String(newProductData.id || `P-${Date.now().toString().slice(-6)}`).trim(),
+        name: String(newProductData.name || "").trim(),
+        category: String(newProductData.category || "").trim(),
         stock: Number(newProductData.stock) || 0,
         buyPrice: Number(newProductData.buyPrice) || 0,
         sellPrice: Number(newProductData.sellPrice) || 0
     };
 
-    // Ubah parameter menjadi query URL agar langsung dieksekusi doGet Apps Script tanpa kendala CORS
     const urlParams = new URLSearchParams({
         action: 'add_product',
         id: productItem.id,
@@ -1360,38 +1359,45 @@ function handleAddProduct(newProductData) {
         sellPrice: productItem.sellPrice
     });
 
-    fetch(`${APPS_SCRIPT_URL}?${urlParams.toString()}`)
-        .then(response => response.json())
-        .then(result => {
-            // Perbarui state lokal aplikasi
-            setProducts(prevProducts => [...prevProducts, productItem]);
-            console.log("Produk sukses ditambah ke Google Sheets & Aplikasi!");
-        })
-        .catch(error => {
-            console.error("Gagal sinkronisasi tambah produk:", error);
-            // Tetap masukkan ke lokal agar kasir tidak terganggu
-            setProducts(prevProducts => [...prevProducts, productItem]);
-        });
+    // Perbarui state lokal aplikasi terlebih dahulu agar respons UI instan
+    setProducts(prevProducts => [...prevProducts, productItem]);
+
+    // Kirim sinyal ke Google Sheets secara background tanpa terhalang CORS
+    fetch(`${APPS_SCRIPT_URL}?${urlParams.toString()}`, { 
+        method: 'GET',
+        mode: 'no-cors' 
+    })
+    .then(() => {
+        console.log("Sinkronisasi tambah produk ke Google Sheets berhasil dikirim.");
+    })
+    .catch(error => {
+        console.error("Gagal sinkronisasi background:", error);
+    });
 }
 
-// 2. Fungsi Hapus Produk (Sinkron 2 Arah PASTI Hapus di Google Sheets)
+// 2. Fungsi Hapus Produk (Sinkron 2 Arah Mendalam)
 function handleDeleteProduct(productId) {
+    const cleanId = String(productId).trim();
+
     const urlParams = new URLSearchParams({
         action: 'delete_product',
-        productId: productId
+        productId: cleanId
     });
 
-    fetch(`${APPS_SCRIPT_URL}?${urlParams.toString()}`)
-        .then(response => response.json())
-        .then(result => {
-            // Hapus dari state lokal aplikasi
-            setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
-            console.log("Produk sukses dihapus dari Google Sheets & Aplikasi!");
-        })
-        .catch(error => {
-            console.error("Gagal sinkronisasi hapus produk:", error);
-            setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
-        });
+    // Perbarui state lokal aplikasi seketika
+    setProducts(prevProducts => prevProducts.filter(p => String(p.id).trim() !== cleanId));
+
+    // Kirim sinyal hapus ke Google Sheets di latar belakang
+    fetch(`${APPS_SCRIPT_URL}?${urlParams.toString()}`, { 
+        method: 'GET',
+        mode: 'no-cors' 
+    })
+    .then(() => {
+        console.log("Sinkronisasi hapus produk ke Google Sheets berhasil dikirim.");
+    })
+    .catch(error => {
+        console.error("Gagal sinkronisasi background hapus:", error);
+    });
 }
       
       if (lastInvoice) {
