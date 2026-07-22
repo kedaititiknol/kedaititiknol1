@@ -1266,7 +1266,7 @@
           }).filter(item => item.qty > 0));
       };
 
-      async function handleCheckout(e) {
+      function handleCheckout(e) {
     if (e && typeof e.preventDefault === 'function') {
         e.preventDefault();
     }
@@ -1298,17 +1298,16 @@
         cashier: user ? user.name : "Kasir"
     };
 
-    try {
-        // 2. Kirim data ke Google Sheets via POST
-        const response = await fetch(APPS_SCRIPT_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({
-                action: 'checkout',
-                transaction: newTransaction
-            }) 
-        });
-        
-        const result = await response.json();
+    // 2. Kirim data ke Google Sheets via POST menggunakan .then() (Tanpa await)
+    fetch(APPS_SCRIPT_URL, { 
+        method: 'POST', 
+        body: JSON.stringify({
+            action: 'checkout',
+            transaction: newTransaction
+        }) 
+    })
+    .then(response => response.json())
+    .then(result => {
         if(result.status !== "success") {
             throw new Error("Gagal menyimpan di server Google Sheets");
         }
@@ -1332,12 +1331,12 @@
         setIsProcessing(false);
         
         setTimeout(() => window.print(), 400);
-
-    } catch (error) {
+    })
+    .catch(error => {
         console.error("Error saat checkout:", error);
         setCheckoutError("Gagal menyimpan transaksi ke Google Sheets! Periksa koneksi internet.");
         setIsProcessing(false);
-    }
+    });
 }
         const newTransaction = {
           id: `TRX-${Date.now().toString().slice(-6)}`, 
