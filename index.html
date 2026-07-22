@@ -160,7 +160,7 @@
       return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     };
 
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDPIjNROLO2rF7DcEMj94aLQppUuq43SPm4Rqo-Omv4apFihhVBpveCKu1EYsDctZ0ig/exec";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUhMJxR5bJrEnFQXnPcu_szBW6gvuSDeESUZEyVDX1Fx-R_b7ZDTWO_sOTCWr2Ptjj_w/exec";
 
     const Icon = ({ name, size = 20, className = "" }) => {
       const paths = {
@@ -1337,6 +1337,45 @@
         setIsProcessing(false);
     });
 }
+
+      function handleAddProduct(newProductData) {
+    // 1. Buat objek produk baru (pastikan ID unik, misal pakai timestamp)
+    const productItem = {
+        id: newProductData.id || `P-${Date.now().toString().slice(-6)}`,
+        name: newProductData.name,
+        category: newProductData.category,
+        stock: Number(newProductData.stock) || 0,
+        buyPrice: Number(newProductData.buyPrice) || 0,
+        sellPrice: Number(newProductData.sellPrice) || 0
+    };
+
+    // 2. Kirim data produk baru ke Google Sheets via POST
+    fetch(APPS_SCRIPT_URL, { 
+        method: 'POST', 
+        mode: 'no-cors',
+        headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify({
+            action: 'add_product',
+            product: productItem
+        }) 
+    })
+    .then(() => {
+        // 3. Perbarui state lokal aplikasi setelah berhasil dikirim
+        setProducts(prevProducts => [...prevProducts, productItem]);
+        
+        // Tutup modal / reset form tambah produk Anda di sini jika ada
+        // setIsAddProductModalOpen(false);
+        
+        console.log("Produk berhasil ditambahkan ke aplikasi & Google Sheets!");
+    })
+    .catch(error => {
+        console.error("Gagal menambah produk ke Google Sheets:", error);
+        alert("Gagal menyinkronkan produk baru ke Google Sheets.");
+    });
+}
+      
       if (lastInvoice) {
         return (
           <div className="flex flex-col items-center justify-center min-h-0 py-6 pb-24 lg:pb-8 animate-fade-in-up">
