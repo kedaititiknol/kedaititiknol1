@@ -763,7 +763,8 @@ const netProfit = totalOmzet - totalHPP - totalExpenses;
             "Kasir": t.cashier,
             "Total Item": t.items ? t.items.length : 0,
             "Total Omzet (Rp)": t.total
-          }));
+          });
+});
           const wsTrx = window.XLSX.utils.json_to_sheet(trxData);
           window.XLSX.utils.book_append_sheet(wb, wsTrx, "Riwayat Transaksi");
 
@@ -771,7 +772,8 @@ const netProfit = totalOmzet - totalHPP - totalExpenses;
             "Tanggal": new Date(e.date).toLocaleString('id-ID'),
             "Keterangan Pengeluaran": e.description,
             "Nominal (Rp)": e.amount
-          }));
+          });
+});
           const wsExp = window.XLSX.utils.json_to_sheet(expData);
           window.XLSX.utils.book_append_sheet(wb, wsExp, "Riwayat Pengeluaran");
 
@@ -2008,7 +2010,10 @@ setTimeout(() => setSyncMessage(null), 3000);
       const handleSaveProfileName = (e) => {
         e.preventDefault();
         if (newProfileName.trim()) {
-          setUser(prev => ({ ...prev, name: newProfileName.trim() }));
+          setUser(prev => ({ ...prev, name: newProfileName.trim() 
+                           
+      });
+});
           setIsProfileModalOpen(false);
           setSyncMessage({ type: 'success', text: 'Nama kasir berhasil diubah!' });
           setTimeout(() => setSyncMessage(null), 3000);
