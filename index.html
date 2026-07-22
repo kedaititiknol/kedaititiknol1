@@ -41,16 +41,11 @@
       }
     }
   </script>
-  
-  <!-- React 18 & Babel Standalone -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <!-- Google Fonts - Plus Jakarta Sans for Modern Aesthetic -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Hubungan Fisik ke manifest.json (Wajib bagi PWA Desktop) -->
   <link rel="manifest" href="manifest.json">
@@ -69,11 +64,10 @@
   <style>
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #FAF7F2; /* krem-50 */
+      background-color: #FAF7F2;
       -webkit-tap-highlight-color: transparent;
     }
     
-    /* Aturan Cetak untuk Struk Kasir */
     @media print {
       body * {
         visibility: hidden;
@@ -94,7 +88,6 @@
       }
     }
 
-    /* Scrollbar Styling with Coksu/Krem tones */
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -103,288 +96,406 @@
       background: transparent;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #E1D7C6; /* krem-200 */
+      background: #E1D7C6;
       border-radius: 10px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #D3C2A8; /* krem-300 */
+      background: #D3C2A8;
     }
   </style>
-  </head>
-  <body class="bg-krem-50 min-h-screen text-coksu-900 overflow-x-hidden">
-  
-    <div id="root"></div>
-    <!-- ==================== UI / TAMPILAN HTML ==================== -->
+</head>
+<body class="bg-krem-50 min-h-screen text-coksu-900 overflow-x-hidden">
+
+  <!-- ==================== STRUKTUR UTAMA DASHBOARD KASIR ==================== -->
+  <div class="flex h-screen overflow-hidden">
     
-    <!-- 1. Form Produk (Admin) -->
-    <form id="formProduk">
-      <input type="text" id="prodId" placeholder="ID Produk" required>
-      <input type="text" id="prodNama" placeholder="Nama Produk" required>
-      <input type="text" id="prodKategori" placeholder="Kategori">
-      <input type="number" id="prodHargaBeli" placeholder="Harga Beli">
-      <input type="number" id="prodHargaJual" placeholder="Harga Jual">
-      <input type="number" id="prodStok" placeholder="Stok">
-      <input type="text" id="prodBarcode" placeholder="Barcode">
-      <button type="submit">Simpan Produk</button>
-    </form>
-  
-    <!-- 2. Section Kasir (POS) -->
-    <div id="sectionKasir">
-      <select id="metodeBayar">
-        <option value="Tunai">Tunai</option>
-        <option value="QRIS">QRIS</option>
-      </select>
-      <button id="btnProsesBayar" onclick="prosesPembayaran()">Proses Bayar</button>
-    </div>
-  
-  
-    <!-- ==================== JAVASCRIPT ==================== -->
-<script>
-  // 1. DEKLARASI VARIABLE GLOBAL & API (WAJIB DI PALING ATAS)
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzgXYVGw3inp1gcKkIJIQkprv7FqtC2dZxnaVHuJOcQ3Huh5Us5jNRcNigzMi9goMOgzA/exec";
-  
-  let daftarProduk = [];
-  let keranjangBelanja = [];
-  let totalBelanja = 0;
-  let nilaiDiskon = 0;
-  let nominalDibayar = 0;
+    <!-- Sidebar Navigasi -->
+    <aside class="w-64 bg-coksu-900 text-krem-100 flex flex-col hidden md:flex shadow-xl z-20">
+      <div class="p-6 border-b border-coksu-800 flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-2xl bg-coksu-500 flex items-center justify-center text-white font-extrabold text-lg shadow-md">TN</div>
+        <div>
+          <h1 class="font-extrabold text-base tracking-wide text-white">Kedai Titik Nol</h1>
+          <p class="text-xs text-coksu-300 font-medium">POS & Management System</p>
+        </div>
+      </div>
+      
+      <nav class="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
+        <button onclick="bukaTab('tabKasir')" id="nav-tabKasir" class="w-full flex items-center space-x-3 p-3.5 rounded-2xl transition-all duration-200 bg-coksu-500 text-white font-bold shadow-sm">
+          <span>☕ Kasir (POS)</span>
+        </button>
+        <button onclick="bukaTab('tabProduk')" id="nav-tabProduk" class="w-full flex items-center space-x-3 p-3.5 rounded-2xl transition-all duration-200 text-coksu-300 hover:bg-coksu-800 hover:text-white font-semibold">
+          <span>📦 Kelola Produk</span>
+        </button>
+        <button onclick="bukaTab('tabLaporan')" id="nav-tabLaporan" class="w-full flex items-center space-x-3 p-3.5 rounded-2xl transition-all duration-200 text-coksu-300 hover:bg-coksu-800 hover:text-white font-semibold">
+          <span>📊 Laporan Transaksi</span>
+        </button>
+      </nav>
+      
+      <div class="p-4 border-t border-coksu-800 text-xs text-coksu-400 text-center">
+        v2.5.0 • Vanilla JS Optimized
+      </div>
+    </aside>
 
-  // 2. FUNGSI FETCH API (PENGAMBILAN & PENGIRIMAN DATA TO SHEETS)
-  async function getProduk() {
-    try {
-      const response = await fetch(`${APPS_SCRIPT_URL}?action=getProduk`);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Gagal mengambil data produk:", error);
-      return [];
-    }
-  }
+    <!-- Area Konten Utama -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-krem-50">
+      
+      <!-- Topbar Header -->
+      <header class="bg-white border-b border-krem-200 h-16 px-6 flex items-center justify-between z-10 shrink-0">
+        <div class="flex items-center space-x-4">
+          <h2 id="judulHalaman" class="text-lg font-black text-coksu-900 tracking-tight">Kasir (POS)</h2>
+        </div>
+        <div class="flex items-center space-x-3">
+          <span class="text-xs font-bold px-3 py-1.5 rounded-full bg-krem-100 text-coksu-700 border border-krem-200">Kasir: Admin</span>
+        </div>
+      </header>
 
-  async function simpanProduk(produkData) {
-    const payload = { action: "saveProduk", produk: produkData };
-    try {
-      const response = await fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json();
-      alert(result.message);
-      renderKatalogProduk(); // Refresh daftar produk setelah simpan
-    } catch (error) {
-      console.error("Gagal menyimpan produk:", error);
-    }
-  }
-
-  async function kirimTransaksi(dataTransaksi, listKeranjang) {
-    const payload = {
-      action: "tambahTransaksi",
-      transaksi: dataTransaksi,
-      items: listKeranjang
-    };
-    try {
-      const response = await fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json();
-      if (result.status === "success") {
-        alert("🎉 Transaksi Berhasil!");
-        keranjangBelanja = []; // Reset keranjang
-        renderKeranjangUI();
-        renderKatalogProduk(); // Refresh stok barang terbaru
-      }
-    } catch (error) {
-      console.error("Error submit transaksi:", error);
-    }
-  }
-
-  // 3. FUNGSI RENDERING UI & INTERAKSI
-  async function renderKatalogProduk() {
-    const container = document.getElementById("katalogProduk");
-    if (!container) return;
-
-    container.innerHTML = `<p class="text-center py-4 text-gray-500">⏳ Memuat data produk...</p>`;
-
-    daftarProduk = await getProduk();
-
-    if (!daftarProduk || daftarProduk.length === 0) {
-      container.innerHTML = `<p class="text-center py-4 text-red-500">Belum ada data produk.</p>`;
-      return;
-    }
-
-    let htmlContent = "";
-    daftarProduk.forEach((item) => {
-      htmlContent += `
-        <tr class="border-b hover:bg-gray-50">
-          <td class="p-2 font-mono text-sm">${item.id_produk}</td>
-          <td class="p-2 font-semibold">${item.nama_produk}</td>
-          <td class="p-2 text-sm text-gray-600">${item.kategori || "-"}</td>
-          <td class="p-2 text-right">Rp ${Number(item.harga_jual).toLocaleString('id-ID')}</td>
-          <td class="p-2 text-center">
-            <span class="px-2 py-1 text-xs rounded ${item.stok > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-              ${item.stok}
-            </span>
-          </td>
-          <td class="p-2 text-center">
-            <button onclick="tambahKeKeranjang('${item.id_produk}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
-              + Tambah
-            </button>
-          </td>
-        </tr>
-      `;
-    });
-
-    container.innerHTML = htmlContent;
-  }
-
-  function tambahKeKeranjang(idProduk) {
-    const produk = daftarProduk.find(p => p.id_produk === idProduk);
-    if (!produk) return;
-
-    if (produk.stok <= 0) {
-      alert("Stok produk ini habis!");
-      return;
-    }
-
-    const itemExist = keranjangBelanja.find(item => item.id_produk === idProduk);
-
-    if (itemExist) {
-      if (itemExist.qty + 1 > produk.stok) {
-        alert("Jumlah melebihi stok yang tersedia!");
-        return;
-      }
-      itemExist.qty += 1;
-      itemExist.subtotal = itemExist.qty * itemExist.harga_satuan;
-    } else {
-      keranjangBelanja.push({
-        id_produk: produk.id_produk,
-        nama_produk: produk.nama_produk,
-        qty: 1,
-        harga_satuan: Number(produk.harga_jual),
-        subtotal: Number(produk.harga_jual)
-      });
-    }
-
-    renderKeranjangUI();
-  }
-
-  function renderKeranjangUI() {
-    const container = document.getElementById("listKeranjang");
-    const totalElem = document.getElementById("textTotalBelanja");
-    
-    if (!container) return;
-
-    if (keranjangBelanja.length === 0) {
-      container.innerHTML = `<p class="text-gray-400 text-center py-4">Keranjang masih kosong</p>`;
-      if (totalElem) totalElem.innerText = "Rp 0";
-      totalBelanja = 0;
-      return;
-    }
-
-    let html = "";
-    totalBelanja = 0;
-
-    keranjangBelanja.forEach((item, index) => {
-      totalBelanja += item.subtotal;
-      html += `
-        <div class="flex justify-between items-center border-b py-2">
-          <div>
-            <p class="font-medium text-sm">${item.nama_produk}</p>
-            <p class="text-xs text-gray-500">${item.qty} x Rp ${item.harga_satuan.toLocaleString('id-ID')}</p>
+      <!-- Konten Tab 1: Kasir / POS -->
+      <div id="tabKasir" class="tab-content flex-1 flex flex-col md:flex-row overflow-hidden p-4 md:p-6 gap-6">
+        <!-- Kolom Kiri: Katalog Produk -->
+        <div class="flex-1 flex flex-col bg-white rounded-3xl border border-krem-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-krem-200 flex flex-col sm:flex-row gap-3 items-center justify-between">
+            <h3 class="font-extrabold text-coksu-900 text-sm">Daftar Produk & Katalog</h3>
+            <input type="text" id="cariProduk" placeholder="Cari nama atau barcode..." class="px-4 py-2 text-sm bg-krem-50 border border-krem-200 rounded-xl focus:outline-none focus:border-coksu-500 w-full sm:w-64">
           </div>
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-sm">Rp ${item.subtotal.toLocaleString('id-ID')}</span>
-            <button onclick="hapusItemKeranjang(${index})" class="text-red-500 text-xs hover:underline">Hapus</button>
+          <div class="flex-1 overflow-y-auto custom-scrollbar p-4">
+            <div id="katalogProduk" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              <!-- Render produk dari JS akan masuk ke sini -->
+              <p class="col-span-full text-center py-8 text-coksu-400">Memuat produk...</p>
+            </div>
           </div>
         </div>
-      `;
+
+        <!-- Kolom Kanan: Keranjang & Pembayaran -->
+        <div class="w-full md:w-96 bg-white rounded-3xl border border-krem-200 shadow-sm flex flex-col overflow-hidden shrink-0">
+          <div class="p-4 border-b border-krem-200 bg-krem-50/50">
+            <h3 class="font-extrabold text-coksu-900 text-sm">Keranjang Belanja</h3>
+          </div>
+          
+          <div id="listKeranjang" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
+            <p class="text-coksu-300 text-center py-8 text-sm">Keranjang masih kosong</p>
+          </div>
+
+          <div class="p-4 border-t border-krem-200 bg-krem-50/50 space-y-3">
+            <div class="flex justify-between items-center text-sm font-semibold text-coksu-700">
+              <span>Metode Pembayaran:</span>
+              <select id="metodeBayar" class="bg-white border border-krem-200 px-3 py-1.5 rounded-xl text-coksu-900 font-bold focus:outline-none focus:border-coksu-500">
+                <option value="Tunai">Tunai</option>
+                <option value="QRIS">QRIS</option>
+              </select>
+            </div>
+            <div class="flex justify-between items-center text-base font-black text-coksu-900 pt-2 border-t border-krem-200">
+              <span>Total Tagihan:</span>
+              <span id="textTotalBelanja" class="text-coksu-500 text-lg">Rp 0</span>
+            </div>
+            <button id="btnProsesBayar" onclick="prosesPembayaran()" class="w-full py-3.5 bg-coksu-500 hover:bg-coksu-600 text-white font-extrabold rounded-2xl shadow-sm transition-all duration-200 text-center">
+              Proses Pembayaran
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Konten Tab 2: Kelola Produk (Admin) -->
+      <div id="tabProduk" class="tab-content hidden flex-1 overflow-y-auto p-6 custom-scrollbar">
+        <div class="max-w-2xl mx-auto bg-white rounded-3xl border border-krem-200 p-6 md:p-8 shadow-sm">
+          <h3 class="text-lg font-black text-coksu-900 mb-6">Tambah / Perbarui Produk</h3>
+          <form id="formProduk" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-coksu-700 mb-1">ID Produk</label>
+                <input type="text" id="prodId" placeholder="Contoh: PRD-001" required class="w-full px-4 py-2.5 rounded-xl border border-krem-200 text-sm focus:outline-none focus:border-coksu-500 bg-krem-50/50">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-coksu-700 mb-1">Barcode</label>
+                <input type="text" id="prodBarcode" placeholder="Scan/Ketik Barcode" class="w-full px-4 py-2.5 rounded-xl border border-krem-200 text-sm focus:outline-none focus:border-coksu-500 bg-krem-50/50">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-coksu-700 mb-1">Nama Produk</label>
+              <input type="text" id="prodNama" placeholder="Contoh: Kopi Susu Aren" required class="w-full px-4 py-2.5 rounded-xl border border-krem-200 text-sm focus:outline-none focus:border-coksu-500 bg-krem-50/50">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-coksu-700 mb-1">Kategori</label>
+              <input type="text" id="prodKategori" placeholder="Contoh: Minuman" class="w-full px-4 py-2.5 rounded-xl border border-krem-200 text-sm focus:outline-none focus:border-coksu-500 bg-krem-50/50">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-coksu-700 mb-1">Harga Beli</label>
+                <input type="number" id="prodHargaBeli" placeholder="0" class="w-full px-4 py-2.5 rounded-xl border border-krem-200 text-sm focus:outline-none focus:border-coksu-500 bg-krem-50/50">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-coksu-700 mb-1">Harga Jual</label>
+                <input type="number" id="prodHargaJual" placeholder="0" required class="w-full px-4 py-2.5 rounded-xl border border-krem-200 text-sm focus:outline-none focus:border-coksu-500 bg-krem-50/50">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-coksu-700 mb-1">Stok Awal</label>
+                <input type="number" id="prodStok" placeholder="0" required class="w-full px-4 py-2.5 rounded-xl border border-krem-200 text-sm focus:outline-none focus:border-coksu-500 bg-krem-50/50">
+              </div>
+            </div>
+            <button type="submit" class="w-full py-3.5 bg-coksu-500 hover:bg-coksu-600 text-white font-extrabold rounded-2xl shadow-sm transition-all duration-200 mt-4">
+              Simpan Produk ke Sheets
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Konten Tab 3: Laporan -->
+      <div id="tabLaporan" class="tab-content hidden flex-1 overflow-y-auto p-6 custom-scrollbar">
+        <div class="max-w-4xl mx-auto bg-white rounded-3xl border border-krem-200 p-6 md:p-8 shadow-sm">
+          <h3 class="text-lg font-black text-coksu-900 mb-4">Laporan & Riwayat Transaksi</h3>
+          <p class="text-sm text-coksu-600">Fitur rekap data transaksi dan ekspor laporan terhubung langsung dengan Google Sheets.</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzgXYVGw3inp1gcKkIJIQkprv7FqtC2dZxnaVHuJOcQ3Huh5Us5jNRcNigzMi9goMOgzA/exec";
+    
+    let daftarProduk = [];
+    let keranjangBelanja = [];
+    let totalBelanja = 0;
+    let nilaiDiskon = 0;
+    let nominalDibayar = 0;
+
+    async function getProduk() {
+      try {
+        const response = await fetch(`${APPS_SCRIPT_URL}?action=getProduk`);
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error("Gagal mengambil data produk:", error);
+        return [];
+      }
+    }
+
+    async function simpanProduk(produkData) {
+      const payload = { action: "saveProduk", produk: produkData };
+      try {
+        const response = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        alert(result.message);
+        renderKatalogProduk();
+      } catch (error) {
+        console.error("Gagal menyimpan produk:", error);
+      }
+    }
+
+    async function kirimTransaksi(dataTransaksi, listKeranjang) {
+      const payload = {
+        action: "tambahTransaksi",
+        transaksi: dataTransaksi,
+        items: listKeranjang
+      };
+      try {
+        const response = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (result.status === "success") {
+          alert("🎉 Transaksi Berhasil!");
+          keranjangBelanja = [];
+          renderKeranjangUI();
+          renderKatalogProduk();
+        }
+      } catch (error) {
+        console.error("Error submit transaksi:", error);
+      }
+    }
+
+    async function renderKatalogProduk() {
+      const container = document.getElementById("katalogProduk");
+      if (!container) return;
+
+      container.innerHTML = `<p class="col-span-full text-center py-8 text-coksu-400">⏳ Memuat data produk...</p>`;
+
+      daftarProduk = await getProduk();
+
+      if (!daftarProduk || daftarProduk.length === 0) {
+        container.innerHTML = `<p class="col-span-full text-center py-8 text-red-500 font-semibold">Belum ada data produk di Google Sheets.</p>`;
+        return;
+      }
+
+      let htmlContent = "";
+      daftarProduk.forEach((item) => {
+        htmlContent += `
+          <div onclick="tambahKeKeranjang('${item.id_produk}')" class="bg-krem-50 hover:bg-krem-100/80 border border-krem-200 rounded-2xl p-4 cursor-pointer transition-all duration-200 flex flex-col justify-between shadow-xs">
+            <div>
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-krem-200 text-coksu-700">${item.kategori || 'Umum'}</span>
+                <span class="text-xs font-bold ${item.stok > 0 ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'} px-2 py-0.5 rounded-full">Stok: ${item.stok}</span>
+              </div>
+              <h4 class="font-extrabold text-sm text-coksu-900 line-clamp-2">${item.nama_produk}</h4>
+            </div>
+            <div class="mt-4 flex items-center justify-between pt-2 border-t border-krem-200">
+              <span class="font-black text-sm text-coksu-500">Rp ${Number(item.harga_jual).toLocaleString('id-ID')}</span>
+              <span class="w-8 h-8 rounded-xl bg-coksu-500 text-white flex items-center justify-center font-bold text-sm shadow-xs">+</span>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = htmlContent;
+    }
+
+    function tambahKeKeranjang(idProduk) {
+      const produk = daftarProduk.find(p => p.id_produk === idProduk);
+      if (!produk) return;
+
+      if (produk.stok <= 0) {
+        alert("Stok produk ini habis!");
+        return;
+      }
+
+      const itemExist = keranjangBelanja.find(item => item.id_produk === idProduk);
+
+      if (itemExist) {
+        if (itemExist.qty + 1 > produk.stok) {
+          alert("Jumlah melebihi stok yang tersedia!");
+          return;
+        }
+        itemExist.qty += 1;
+        itemExist.subtotal = itemExist.qty * itemExist.harga_satuan;
+      } else {
+        keranjangBelanja.push({
+          id_produk: produk.id_produk,
+          nama_produk: produk.nama_produk,
+          qty: 1,
+          harga_satuan: Number(produk.harga_jual),
+          subtotal: Number(produk.harga_jual)
+        });
+      }
+
+      renderKeranjangUI();
+    }
+
+    function renderKeranjangUI() {
+      const container = document.getElementById("listKeranjang");
+      const totalElem = document.getElementById("textTotalBelanja");
+      
+      if (!container) return;
+
+      if (keranjangBelanja.length === 0) {
+        container.innerHTML = `<p class="text-coksu-300 text-center py-8 text-sm">Keranjang masih kosong</p>`;
+        if (totalElem) totalElem.innerText = "Rp 0";
+        totalBelanja = 0;
+        return;
+      }
+
+      let html = "";
+      totalBelanja = 0;
+
+      keranjangBelanja.forEach((item, index) => {
+        totalBelanja += item.subtotal;
+        html += `
+          <div class="flex justify-between items-center bg-krem-50 p-3 rounded-2xl border border-krem-200">
+            <div>
+              <p class="font-extrabold text-xs text-coksu-900">${item.nama_produk}</p>
+              <p class="text-[11px] text-coksu-500 font-medium">${item.qty} x Rp ${item.harga_satuan.toLocaleString('id-ID')}</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <span class="font-black text-xs text-coksu-900">Rp ${item.subtotal.toLocaleString('id-ID')}</span>
+              <button onclick="hapusItemKeranjang(${index})" class="text-red-500 hover:text-red-700 font-bold text-xs">✕</button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      if (totalElem) totalElem.innerText = `Rp ${totalBelanja.toLocaleString('id-ID')}`;
+      nominalDibayar = totalBelanja;
+    }
+
+    function hapusItemKeranjang(index) {
+      keranjangBelanja.splice(index, 1);
+      renderKeranjangUI();
+    }
+
+    function bukaTab(namaTab) {
+      const sections = document.querySelectorAll('.tab-content');
+      sections.forEach(sec => sec.classList.add('hidden'));
+
+      const targetTab = document.getElementById(namaTab);
+      if (targetTab) {
+        targetTab.classList.remove('hidden');
+      }
+
+      // Update styling navigasi tombol sidebar
+      const navButtons = document.querySelectorAll('aside nav button');
+      navButtons.forEach(btn => {
+        btn.className = "w-full flex items-center space-x-3 p-3.5 rounded-2xl transition-all duration-200 text-coksu-300 hover:bg-coksu-800 hover:text-white font-semibold";
+      });
+      const activeNav = document.getElementById(`nav-${namaTab}`);
+      if (activeNav) {
+        activeNav.className = "w-full flex items-center space-x-3 p-3.5 rounded-2xl transition-all duration-200 bg-coksu-500 text-white font-bold shadow-sm";
+      }
+
+      // Update judul header
+      const judulMap = {
+        'tabKasir': 'Kasir (POS)',
+        'tabProduk': 'Kelola Produk',
+        'tabLaporan': 'Laporan Transaksi'
+      };
+      const titleElem = document.getElementById("judulHalaman");
+      if (titleElem) titleElem.innerText = judulMap[namaTab] || 'POS System';
+
+      if (namaTab === 'tabKasir' || namaTab === 'tabProduk') {
+        renderKatalogProduk();
+      }
+    }
+
+    document.getElementById("formProduk")?.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const produkData = {
+        id_produk: document.getElementById("prodId").value,
+        nama_produk: document.getElementById("prodNama").value,
+        kategori: document.getElementById("prodKategori").value,
+        harga_beli: Number(document.getElementById("prodHargaBeli").value),
+        harga_jual: Number(document.getElementById("prodHargaJual").value),
+        stok: Number(document.getElementById("prodStok").value),
+        barcode: document.getElementById("prodBarcode").value
+      };
+
+      await simpanProduk(produkData);
+      this.reset();
     });
 
-    container.innerHTML = html;
-    if (totalElem) totalElem.innerText = `Rp ${totalBelanja.toLocaleString('id-ID')}`;
-    nominalDibayar = totalBelanja;
-  }
+    async function prosesPembayaran() {
+      if (keranjangBelanja.length === 0) {
+        alert("Keranjang masih kosong!");
+        return;
+      }
 
-  function hapusItemKeranjang(index) {
-    keranjangBelanja.splice(index, 1);
-    renderKeranjangUI();
-  }
+      const dataTransaksi = {
+        id_transaksi: "TRX-" + Date.now(),
+        tanggal: new Date().toISOString().split('T')[0],
+        waktu: new Date().toLocaleTimeString('id-ID', { hour12: false }),
+        kasir: "Admin",
+        metode_pembayaran: document.getElementById("metodeBayar").value,
+        total_belanja: totalBelanja,
+        diskon: nilaiDiskon,
+        total_bayar: nominalDibayar
+      };
 
-  function bukaTab(namaTab) {
-    const sections = document.querySelectorAll('.tab-content');
-    sections.forEach(sec => sec.classList.add('hidden'));
-
-    const targetTab = document.getElementById(namaTab);
-    if (targetTab) {
-      targetTab.classList.remove('hidden');
+      await kirimTransaksi(dataTransaksi, keranjangBelanja);
     }
 
-    if (namaTab === 'tabKasir' || namaTab === 'tabProduk') {
+    // Auto initialize saat halaman dibuka
+    document.addEventListener("DOMContentLoaded", () => {
       renderKatalogProduk();
-    }
-  }
-
-  // 4. HANDLER EVENT LISTENER (EVENT FORM & TOMBOL)
-  document.getElementById("formProduk")?.addEventListener("submit", async function(e) {
-    e.preventDefault();
-    const produkData = {
-      id_produk: document.getElementById("prodId").value,
-      nama_produk: document.getElementById("prodNama").value,
-      kategori: document.getElementById("prodKategori").value,
-      harga_beli: Number(document.getElementById("prodHargaBeli").value),
-      harga_jual: Number(document.getElementById("prodHargaJual").value),
-      stok: Number(document.getElementById("prodStok").value),
-      barcode: document.getElementById("prodBarcode").value
-    };
-
-    await simpanProduk(produkData);
-    this.reset();
-  });
-
-  async function prosesPembayaran() {
-    if (keranjangBelanja.length === 0) {
-      alert("Keranjang masih kosong!");
-      return;
-    }
-
-    const dataTransaksi = {
-      id_transaksi: "TRX-" + Date.now(),
-      tanggal: new Date().toISOString().split('T')[0],
-      waktu: new Date().toLocaleTimeString('id-ID', { hour12: false }),
-      kasir: "Admin",
-      metode_pembayaran: document.getElementById("metodeBayar").value,
-      total_belanja: totalBelanja,
-      diskon: nilaiDiskon,
-      total_bayar: nominalDibayar
-    };
-
-    await kirimTransaksi(dataTransaksi, keranjangBelanja);
-  }
-
-  // 5. AUTO INITIALIZE DATA SAAT HALAMAN SELESAI LOAD
-  document.addEventListener("DOMContentLoaded", () => {
-    renderKatalogProduk();
-  });
+    });
   </script>
 
   <style>
     @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes fade-in-up { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes scale-up { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-    @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-    
     .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
-    .animate-fade-in-up { animation: fade-in-up 0.4s ease-out forwards; }
-    .animate-scale-up { animation: scale-up 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-    .animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.165, 0.84, 0.44, 1) forwards; }
-    .animate-shake { animation: shake 0.3s ease-in-out; }
-    
-    /* Env Safe Area for Modern Mobile Phones (Notch) */
-    .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
   </style>
 
 </body>
