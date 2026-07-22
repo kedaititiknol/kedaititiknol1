@@ -1297,6 +1297,7 @@
         cashier: user ? user.name : "Kasir"
     };
 
+    // Kirim data ke Google Sheets via POST
     fetch(APPS_SCRIPT_URL, { 
         method: 'POST', 
         body: JSON.stringify({
@@ -1310,6 +1311,7 @@
             throw new Error("Gagal menyimpan di server Google Sheets");
         }
         
+        // Update stok lokal di aplikasi
         setProducts(products.map(p => {
             const cartItem = cart.find(c => c.id === p.id);
             return cartItem ? { ...p, stock: Number(p.stock) - Number(cartItem.qty) } : p;
@@ -1334,7 +1336,6 @@
         setIsProcessing(false);
     });
 }
-
       if (lastInvoice) {
         return (
           <div className="flex flex-col items-center justify-center min-h-0 py-6 pb-24 lg:pb-8 animate-fade-in-up">
