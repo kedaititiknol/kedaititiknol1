@@ -162,6 +162,40 @@
 
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwvyl_u7XJCIEofxqJQf7YsKXIiR-pc84eL8U_AmDapASeAFDTuec5vbW_7G8TlAddAtg/exec";
 
+// Fungsi 1: Menarik data dari Sheets ke Aplikasi (GET)
+const tarikDataDariSheet = async (namaSheet) => {
+  try {
+    const response = await fetch(`${SCRIPT_URL}?sheet=${namaSheet}`);
+    const result = await response.json();
+    if (result.status === 'success') {
+      return result.data;
+    }
+    return [];
+  } catch (error) {
+    console.error(`Gagal menarik data dari ${namaSheet}:`, error);
+    return null; // Mengembalikan null jika gagal (misal offline)
+  }
+};
+
+// Fungsi 2: Mengirim data baru dari Aplikasi ke Sheets (POST)
+const kirimDataKeSheet = async (namaSheet, dataBarisArray) => {
+  try {
+    const payload = {
+      sheetName: namaSheet,
+      rowData: dataBarisArray
+    };
+    
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    console.log(`Data berhasil dikirim ke ${namaSheet}`);
+  } catch (error) {
+    console.error(`Gagal mengirim data ke ${namaSheet}:`, error);
+  }
+};
+    
     const Icon = ({ name, size = 20, className = "" }) => {
       const paths = {
         dashboard: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" />,
@@ -1375,6 +1409,23 @@ function handleAddProduct(newProductData) {
     });
 }
 
+const prosesPembayaran = (keranjang, total) => {
+  // 1. Logika kodemu yang lama (menyimpan ke state/localStorage)
+  const transaksiBaru = { id: Date.now(), total: total, tanggal: new Date().toISOString() };
+  const updateTransaksi = [...transactions, transaksiBaru];
+  setTransactions(updateTransaksi);
+  
+  // 2. TAMBAHKAN INI: Kirim data ke Google Sheets
+  // Pastikan urutan array sesuai dengan urutan judul kolom di tab "Transactions"
+  kirimDataKeSheet("Transactions", [
+    transaksiBaru.id, 
+    transaksiBaru.tanggal, 
+    transaksiBaru.total
+  ]);
+  
+  // 3. Reset keranjang dll...
+};
+      
 // 2. Fungsi Hapus Produk (Sinkron 2 Arah Mendalam)
 function handleDeleteProduct(productId) {
     const cleanId = String(productId).trim();
@@ -1632,6 +1683,37 @@ function handleDeleteProduct(productId) {
         return saved ? JSON.parse(saved) : initialExpenses;
       });
 
+      React.useEffect(() => {
+  const inisialisasiData = async () => {
+    // Bisa tambahkan state loading di sini jika punya (misal: setIsLoading(true))
+    
+    // Menarik semua data secara paralel agar lebih cepat
+    const [dataUsers, dataProducts, dataTransactions, dataExpenses, dataSettings] = await Promise.all([
+      tarikDataDariSheet("Users"),
+      tarikDataDariSheet("Products"),
+      tarikDataDariSheet("Transactions"),
+      tarikDataDariSheet("Expenses"),
+      tarikDataDariSheet("Settings")
+    ]);
+
+    // Update state aplikasi jika data berhasil ditarik (tidak null)
+    // Sesuaikan nama fungsi 'set...' di bawah dengan yang ada di kodemu
+    if (dataUsers) setUsers(dataUsers);
+    if (dataProducts) setProducts(dataProducts);
+    if (dataTransactions) setTransactions(dataTransactions);
+    if (dataExpenses) setExpenses(dataExpenses);
+    if (dataSettings) setSettings(dataSettings);
+
+    // Simpan juga ke localStorage sebagai backup jika sewaktu-waktu offline
+    if (dataProducts) localStorage.setItem('products', JSON.stringify(dataProducts));
+    // ... (lakukan hal yang sama untuk data lainnya) ...
+
+    // Matikan loading di sini (misal: setIsLoading(false))
+  };
+
+  inisialisasiData();
+}, []); // Array kosong berarti hanya dijalankan 1x saat aplikasi dibuka  
+      
       const [isLoading, setIsLoading] = useState(false);
 
       const handleSyncWithGoogleSheets = () => {
@@ -1864,6 +1946,19 @@ useEffect(() => {
         }
       };
 
+      const tambahPengeluaran = (nama, nominal) => {
+  // 1. Logika kodemu yang lama
+  const pengeluaranBaru = { id: Date.now(), nama: nama, nominal: nominal };
+  setExpenses([...expenses, pengeluaranBaru]);
+  
+  // 2. TAMBAHKAN INI: Kirim ke Sheets
+  kirimDataKeSheet("Expenses", [
+    pengeluaranBaru.id, 
+    pengeluaranBaru.nama, 
+    pengeluaranBaru.nominal
+  ]);
+};
+      
       const handleDeleteExpense = async (expenseId) => {
         setExpenses(prev => prev.filter(e => e.id !== expenseId));
         try {
