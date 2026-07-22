@@ -316,8 +316,8 @@
       }));
 
       const netProfit = totalOmzet - totalHPP - totalExpenses;
-      const lowStockProducts = products.filter(p => p.stock < 10);
-      const recentTransactions = [...transactions].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+      const lowStockProducts = (products || []).filter(p => p.stock < 10);
+      const recentTransactions = [...[...(transactions || [])].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
 
       return (
         <div className="space-y-6 pb-24 lg:pb-0 animate-fade-in-up">
@@ -423,7 +423,7 @@
       const [editingId, setEditingId] = useState(null);
       const [formData, setFormData] = useState({ name: '', categoryId: 1, stock: 0, costPrice: 0, sellPrice: 0 });
 
-      const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      const filteredProducts = (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
       console.log("ProductManager products:", products.length);
       console.log(products);
@@ -702,7 +702,7 @@
 
       const filteredTransactions = useMemo(() => {
         const now = new Date();
-        return transactions.filter(trx => {
+        return(transactions || []).filter(trx => {
           if (filter === 'all') return true;
           const tDate = new Date(trx.date);
           if (filter === 'day') return tDate.toDateString() === now.toDateString();
@@ -714,7 +714,7 @@
 
       const filteredExpenses = useMemo(() => {
         const now = new Date();
-        return expenses.filter(exp => {
+        return (expenses || []).filter(exp => {
           if (filter === 'all') return true;
           const tDate = new Date(exp.date);
           if (filter === 'day') return tDate.toDateString() === now.toDateString();
@@ -1245,7 +1245,7 @@
 
       const [mobileTab, setMobileTab] = useState('menu'); 
 
-      const filteredProducts = products.filter(p => (selectedCategory === 'all' || p.categoryId === selectedCategory) && p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      const filteredProducts =(products || []).filter(p => (selectedCategory === 'all' || p.categoryId === selectedCategory) && p.name.toLowerCase().includes(searchTerm.toLowerCase()));
       const cartTotal = cart.reduce((sum, item) => sum + (item.sellPrice * item.qty), 0);
 
       const addToCart = (product) => {
@@ -1532,6 +1532,10 @@ await loadServerData();
       
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [syncStatus, setSyncStatus] = useState("idle");
+
+      console.log("products =", products);
+console.log("transactions =", transactions);
+console.log("expenses =", expenses);
       
       const loadServerData = async () => {
     if (!navigator.onLine) {
@@ -2251,7 +2255,7 @@ setTimeout(() => setSyncMessage(null), 3000);
                   products={products} 
                   setProducts={setProducts} 
                   categories={categories} 
-                  addTransaction={(trx) => setTransactions([trx, ...transactions])} 
+                  addTransaction={(trx) => setTransactions([trx, ...[...(transactions || [])])} 
                   user={user} 
                   isOnline={isOnline} 
                   onEditProfile={handleOpenEditProfile} 
