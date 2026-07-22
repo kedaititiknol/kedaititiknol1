@@ -1267,13 +1267,76 @@
       };
 
       const handleCheckout = async (e) => {
-        e.preventDefault();
-        setCheckoutError('');
-        const paid = parseInt(paymentAmount) || 0;
-        
-        if (paymentMethod === 'Tunai' && paid < cartTotal) { setCheckoutError("Uang tunai kurang!"); return; }
+    e.preventDefault();
+    setCheckoutError('');
+    const paid = parseInt(paymentAmount) || 0;
+    
+    if (paymentMethod === 'Tunai' && paid < cartTotal) { 
+        setCheckoutError("Uang tunai kurang!"); 
+        return; 
+    }
 
-        setIsProcessing(true);
+    setIsProcessing(true);
+
+    // 1. Siapkan data transaksi baru
+    const newTransaction = {
+        id: `TRX-${Date.now().toString().slice(-6)}`, 
+        date: new Date().toISOString(),
+        items: cart.map(c => ({ 
+            productId: c.id, 
+            name: c.name, 
+            qty: c.qty, 
+            price: c.sellPrice, 
+            subtotal: c.sellPrice * c.qty 
+        })),
+        total: cartTotal, 
+        payment: paymentMethod === 'Tunai' ? paid : cartTotal,
+        change: paymentMethod === 'Tunai' ? paid - cartTotal : 0,
+        paymentMethod: paymentMethod, 
+        cashier: user ? user.name : "Kasir"
+    };
+
+    try {
+        // 2. Kirim data ke Google Sheets via POST
+        const response = await fetch(APPS_SCRIPT_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({
+                action: 'checkout',
+                transaction: newTransaction
+            }) 
+        });
+        
+        const result = await response.json();
+        if(result.status !== "success") {
+            throw new Error("Gagal menyimpan di server Google Sheets");
+        }
+        
+        // 3. Update State Lokal (Stok berkurang & Tambah riwayat transaksi di aplikasi)
+        setProducts(products.map(p => {
+            const cartItem = cart.find(c => c.id === p.id);
+            return cartItem ? { ...p, stock: Number(p.stock) - Number(cartItem.qty) } : p;
+        }));
+        
+        if (typeof addTransaction === 'function') {
+            addTransaction(newTransaction);
+        }
+        
+        // 4. Bersihkan form & keranjang, lalu cetak struk
+        setLastInvoice(newTransaction);
+        setCart([]); 
+        setIsCheckingOut(false); 
+        setPaymentAmount(''); 
+        setPaymentMethod('Tunai'); 
+        setIsProcessing(false);
+        
+        setTimeout(() => window.print(), 400);
+
+    } catch (error) {
+        console.error("Error saat checkout:", error);
+        setCheckoutError("Gagal menyimpan transaksi ke Google Sheets! Periksa koneksi internet.");
+        setIsProcessing(false);
+    }
+};
         const newTransaction = {
           id: `TRX-${Date.now().toString().slice(-6)}`, 
           date: new Date().toISOString(),
@@ -1566,6 +1629,34 @@
       const [pwaPrompt, setPwaPrompt] = useState(null);
       const [pwaInstalled, setPwaInstalled] = useState(false);
 
+      // === TAMBAHKAN KODE INI UNTUK MENARIK DATA DARI GOOGLE SHEETS ===
+      useEffect(() => {
+        setIsLoading(true);
+        fetch(APPS_SCRIPT_URL)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Gagal terhubung ke server Google Sheets');
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log("Data dari Sheets berhasil dimuat:", data);
+            
+            // Masukkan data dari Sheets ke state aplikasi Anda
+            // (Jika data di Sheets ada, gunakan itu. Jika kosong, fallback ke data lokal/kosong)
+            if (data.categories && data.categories.length > 0) setCategories(data.categories);
+            if (data.products && data.products.length > 0) setProducts(data.products);
+            if (data.transactions && data.transactions.length > 0) setTransactions(data.transactions);
+            if (data.expenses && data.expenses.length > 0) setExpenses(data.expenses);
+            
+            setIsLoading(false);
+          })
+          .catch(error => {
+            console.error("Gagal mengambil data, menggunakan data lokal:", error);
+            setIsLoading(false);
+          });
+      }, []); // Array kosong di akhir membuat ini hanya berjalan sekali saat aplikasi pertama kali dibuka
+      
       useEffect(() => {
         localStorage.setItem('titiknol_categories', JSON.stringify(categories));
       }, [categories]);
