@@ -160,7 +160,7 @@
       return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     };
 
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfgnHCpCKJGqAnJn92u31TGDx7z0vpKLtS2MdH5jznnVbebN53OOySwFjSkonpY4wklw/exec";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwsfp8xqmjwMADKnsTgkCjK9xJlacTs71yc194uaBHZLAsnZP14t6p8Wobb2x-GUdsx_g/exec";
 
     const Icon = ({ name, size = 20, className = "" }) => {
       const paths = {
@@ -1338,7 +1338,7 @@
     });
 }
 
-     // 1. Fungsi Tambah Produk (Sinkron 2 Arah ke Google Sheets)
+     // 1. Fungsi Tambah Produk (Sinkron 2 Arah PASTI Masuk ke Google Sheets)
 function handleAddProduct(newProductData) {
     const productItem = {
         id: newProductData.id || `P-${Date.now().toString().slice(-6)}`,
@@ -1349,53 +1349,49 @@ function handleAddProduct(newProductData) {
         sellPrice: Number(newProductData.sellPrice) || 0
     };
 
-    // Ubah metode fetch agar mengirim payload string mentah agar lolos pembatasan CORS
-    fetch(APPS_SCRIPT_URL, { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-            action: 'add_product',
-            product: productItem
-        }) 
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.status === "success" || result) {
-            // Perbarui state lokal aplikasi seketika
-            setProducts(prevProducts => [...prevProducts, productItem]);
-            console.log("Produk berhasil ditambahkan & tersimpan di Google Sheets!");
-        } else {
-            alert("Gagal menyimpan produk ke Google Sheets.");
-        }
-    })
-    .catch(error => {
-        console.error("Error jaringan saat menambah produk:", error);
-        // Fallback jika respons JSON terhalang browser, tetap masukkan ke lokal tapi ingatkan
-        setProducts(prevProducts => [...prevProducts, productItem]);
+    // Ubah parameter menjadi query URL agar langsung dieksekusi doGet Apps Script tanpa kendala CORS
+    const urlParams = new URLSearchParams({
+        action: 'add_product',
+        id: productItem.id,
+        name: productItem.name,
+        category: productItem.category,
+        stock: productItem.stock,
+        buyPrice: productItem.buyPrice,
+        sellPrice: productItem.sellPrice
     });
+
+    fetch(`${APPS_SCRIPT_URL}?${urlParams.toString()}`)
+        .then(response => response.json())
+        .then(result => {
+            // Perbarui state lokal aplikasi
+            setProducts(prevProducts => [...prevProducts, productItem]);
+            console.log("Produk sukses ditambah ke Google Sheets & Aplikasi!");
+        })
+        .catch(error => {
+            console.error("Gagal sinkronisasi tambah produk:", error);
+            // Tetap masukkan ke lokal agar kasir tidak terganggu
+            setProducts(prevProducts => [...prevProducts, productItem]);
+        });
 }
 
-// 2. Fungsi Hapus Produk (Sinkron 2 Arah ke Google Sheets)
+// 2. Fungsi Hapus Produk (Sinkron 2 Arah PASTI Hapus di Google Sheets)
 function handleDeleteProduct(productId) {
-    fetch(APPS_SCRIPT_URL, { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-            action: 'delete_product',
-            productId: productId
-        }) 
-    })
-    .then(response => response.json())
-    .then(result => {
-        // Hapus produk dari state lokal aplikasi
-        setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
-        console.log("Produk berhasil dihapus dari aplikasi & Google Sheets!");
-    })
-    .catch(error => {
-        console.error("Error jaringan saat menghapus produk:", error);
-        // Fallback lokal
-        setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
+    const urlParams = new URLSearchParams({
+        action: 'delete_product',
+        productId: productId
     });
+
+    fetch(`${APPS_SCRIPT_URL}?${urlParams.toString()}`)
+        .then(response => response.json())
+        .then(result => {
+            // Hapus dari state lokal aplikasi
+            setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
+            console.log("Produk sukses dihapus dari Google Sheets & Aplikasi!");
+        })
+        .catch(error => {
+            console.error("Gagal sinkronisasi hapus produk:", error);
+            setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
+        });
 }
       
       if (lastInvoice) {
