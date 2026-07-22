@@ -1567,6 +1567,8 @@
         return saved ? JSON.parse(saved) : initialExpenses;
       });
 
+      const [isLoading, setIsLoading] = useState(false);
+      
       const [storeName, setStoreName] = useState(() => {
         return localStorage.getItem('titiknol_store_name') || 'Kedai Titik Nol';
       });
