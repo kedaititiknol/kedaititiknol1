@@ -1831,15 +1831,6 @@ function handleDeleteProduct(productId) {
       // State loading sinkronisasi (cukup 1 saja)
       const [isSyncing, setIsSyncing] = useState(false);
 
-      const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-      const [newProfileName, setNewProfileName] = useState('');
-
-      const [confirmDialog, setConfirmDialog] = useState({
-        isOpen: false,
-        message: "",
-        onConfirm: null
-      });
-
       // PWA Hooks
       const [pwaPrompt, setPwaPrompt] = useState(null);
       const [pwaInstalled, setPwaInstalled] = useState(false);
