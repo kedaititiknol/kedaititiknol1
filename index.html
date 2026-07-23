@@ -118,6 +118,8 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo, useRef } = React;
 
+    const [users, setUsers] = useState([]);
+
     const initialCategories = [
       { id: 1, name: 'Kopi' },
       { id: 2, name: 'Non-Kopi' },
@@ -1835,57 +1837,59 @@ function handleDeleteProduct(productId) {
       const [isSyncing, setIsSyncing] = useState(false);
 
       // 2. Fungsi tombol sinkronisasi yang sudah disesuaikan dengan state toko
-      const handleManualSync = async () => {
-        setIsSyncing(true);
-        
-        try {
-          const [dataUsers, dataProducts, dataTransactions, dataExpenses, dataSettings] = await Promise.all([
-            tarikDataDariSheet("Users"),
-            tarikDataDariSheet("Products"),
-            tarikDataDariSheet("Transactions"),
-            tarikDataDariSheet("Expenses"),
-            tarikDataDariSheet("Settings")
-          ]);
+      // Fungsi tombol sinkronisasi manual yang disempurnakan
+const handleManualSync = async () => {
+  setIsSyncing(true);
+  
+  try {
+    const [dataUsers, dataProducts, dataTransactions, dataExpenses, dataSettings] = await Promise.all([
+      tarikDataDariSheet("Users"),
+      tarikDataDariSheet("Products"),
+      tarikDataDariSheet("Transactions"),
+      tarikDataDariSheet("Expenses"),
+      tarikDataDariSheet("Settings")
+    ]);
 
-          if (dataUsers) setUsers(dataUsers);
-          if (dataProducts) setProducts(dataProducts);
-          if (dataTransactions) setTransactions(dataTransactions);
-          if (dataExpenses) setExpenses(dataExpenses);
+    // Update State (Hanya jalankan jika fungsi dan datanya tersedia)
+    if (dataUsers && typeof setUsers === 'function') setUsers(dataUsers);
+    if (dataProducts && typeof setProducts === 'function') setProducts(dataProducts);
+    if (dataTransactions && typeof setTransactions === 'function') setTransactions(dataTransactions);
+    if (dataExpenses && typeof setExpenses === 'function') setExpenses(dataExpenses);
 
-          // Penanganan khusus untuk settings (karena dipisah per state)
-          if (dataSettings) {
-            const settingData = Array.isArray(dataSettings) ? dataSettings[0] : dataSettings;
-            if (settingData) {
-              if (settingData.namaToko) {
-                setStoreName(settingData.namaToko);
-                localStorage.setItem('titiknol_store_name', settingData.namaToko);
-              }
-              if (settingData.alamat) {
-                setStoreAddress(settingData.alamat);
-                localStorage.setItem('titiknol_store_address', settingData.alamat);
-              }
-              if (settingData.telepon) {
-                setStorePhone(settingData.telepon);
-                localStorage.setItem('titiknol_store_phone', settingData.telepon);
-              }
-            }
-          }
-
-          // Update Backup LocalStorage lainnya
-          if (dataUsers) localStorage.setItem('users', JSON.stringify(dataUsers));
-          if (dataProducts) localStorage.setItem('products', JSON.stringify(dataProducts));
-          if (dataTransactions) localStorage.setItem('transactions', JSON.stringify(dataTransactions));
-          if (dataExpenses) localStorage.setItem('expenses', JSON.stringify(dataExpenses));
-
-          alert("✅ Sinkronisasi berhasil! Data sudah versi terbaru.");
-          
-        } catch (error) {
-          console.error("Sinkronisasi gagal:", error);
-          alert("❌ Gagal menyinkronkan data. Pastikan koneksi internet lancar dan URL Apps Script benar.");
-        } finally {
-          setIsSyncing(false);
+    // Penanganan khusus untuk Settings (Store Info)
+    if (dataSettings) {
+      const settingData = Array.isArray(dataSettings) ? dataSettings[0] : dataSettings;
+      if (settingData) {
+        if (settingData.namaToko && typeof setStoreName === 'function') {
+          setStoreName(settingData.namaToko);
+          localStorage.setItem('titiknol_store_name', settingData.namaToko);
         }
-      };
+        if (settingData.alamat && typeof setStoreAddress === 'function') {
+          setStoreAddress(settingData.alamat);
+          localStorage.setItem('titiknol_store_address', settingData.alamat);
+        }
+        if (settingData.telepon && typeof setStorePhone === 'function') {
+          setStorePhone(settingData.telepon);
+          localStorage.setItem('titiknol_store_phone', settingData.telepon);
+        }
+      }
+    }
+
+    // Update Backup LocalStorage
+    if (dataUsers) localStorage.setItem('users', JSON.stringify(dataUsers));
+    if (dataProducts) localStorage.setItem('products', JSON.stringify(dataProducts));
+    if (dataTransactions) localStorage.setItem('transactions', JSON.stringify(dataTransactions));
+    if (dataExpenses) localStorage.setItem('expenses', JSON.stringify(dataExpenses));
+
+    alert("✅ Sinkronisasi berhasil! Data sudah versi terbaru.");
+    
+  } catch (error) {
+    console.error("Sinkronisasi gagal:", error);
+    alert("❌ Gagal menyinkronkan data. Pastikan koneksi internet lancar dan URL Apps Script benar.");
+  } finally {
+    setIsSyncing(false);
+  }
+};
       const [syncMessage, setSyncMessage] = useState(null);
 
       const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
