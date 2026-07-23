@@ -1831,10 +1831,6 @@ function handleDeleteProduct(productId) {
       // State loading sinkronisasi (cukup 1 saja)
       const [isSyncing, setIsSyncing] = useState(false);
 
-      // PWA Hooks
-      const [pwaPrompt, setPwaPrompt] = useState(null);
-      const [pwaInstalled, setPwaInstalled] = useState(false);
-
       // 2. Fungsi tombol sinkronisasi yang sudah disesuaikan dengan state toko
       const handleManualSync = async () => {
         setIsSyncing(true);
