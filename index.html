@@ -1737,6 +1737,25 @@ function handleDeleteProduct(productId) {
     };
 
     function App() {
+
+       const [storeName, setStoreName] = useState(() => {
+        return localStorage.getItem('titiknol_store_name') || 'Kedai Titik Nol';
+      });
+      const [storeAddress, setStoreAddress] = useState(() => {
+        return localStorage.getItem('titiknol_store_address') || 'Jl. Kenangan No. 99';
+      });
+      const [storePhone, setStorePhone] = useState(() => {
+        return localStorage.getItem('titiknol_store_phone') || '081234567890';
+      });
+
+      const [loginForm, setLoginForm] = useState({ username: '', password: '', customCashierName: '' });
+      const [loginError, setLoginError] = useState('');
+      const [activeTab, setActiveTab] = useState('dashboard');
+      const [isOnline, setIsOnline] = useState(navigator.onLine);
+      
+      // State loading sinkronisasi (cukup 1 saja)
+      const [isSyncing, setIsSyncing] = useState(false);
+      
       const [user, setUser] = useState(() => {
         const saved = localStorage.getItem('titiknol_user');
         return saved ? JSON.parse(saved) : null;
@@ -1818,23 +1837,7 @@ function handleDeleteProduct(productId) {
         });
 };
       
-      const [storeName, setStoreName] = useState(() => {
-        return localStorage.getItem('titiknol_store_name') || 'Kedai Titik Nol';
-      });
-      const [storeAddress, setStoreAddress] = useState(() => {
-        return localStorage.getItem('titiknol_store_address') || 'Jl. Kenangan No. 99';
-      });
-      const [storePhone, setStorePhone] = useState(() => {
-        return localStorage.getItem('titiknol_store_phone') || '081234567890';
-      });
-
-      const [loginForm, setLoginForm] = useState({ username: '', password: '', customCashierName: '' });
-      const [loginError, setLoginError] = useState('');
-      const [activeTab, setActiveTab] = useState('dashboard');
-      const [isOnline, setIsOnline] = useState(navigator.onLine);
-      
-      // State loading sinkronisasi (cukup 1 saja)
-      const [isSyncing, setIsSyncing] = useState(false);
+     
 
       // 2. Fungsi tombol sinkronisasi yang sudah disesuaikan dengan state toko
       // Fungsi tombol sinkronisasi manual yang disempurnakan
